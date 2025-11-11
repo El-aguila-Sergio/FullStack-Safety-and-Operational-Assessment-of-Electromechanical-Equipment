@@ -16,10 +16,6 @@
 
 **新疆和田地区机电设备极端天气安全评估系统**是一款面向工业设备安全管理的智能气象预警平台。系统集成了实时气象监控、设备安全评估、预警预报等核心功能，为和田地区机电设备在极端天气条件下的安全运行提供全方位保障。
 
-## 开发者
-##### El-aguila  Github主页：https://github.com/El-aguilaZhwt
-##### kashi  Github主页：https://github.com/xszzzz
-
 ### 🌟 核心特色
 
 - 🚨 **实时极端天气监控** - 多维度气象数据采集与分析
@@ -28,6 +24,11 @@
 - ⚡ **智能预警中心** - 多级预警机制，及时风险提示
 - 👥 **多角色权限管理** - 分级授权，安全可控
 - 📱 **响应式设计** - 支持多终端访问
+
+
+## 👨‍💻 开发者
+##### El-aguila  Github主页：https://github.com/El-aguilaZhwt
+##### kashi  Github主页：https://github.com/xszzzz
 
 ## 🏗️ 系统架构
 
