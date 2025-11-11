@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>气象监测大屏</title>
+    <!-- 引入 ECharts 和 jQuery -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        /* 确保 body 占满整个视口 */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* 创建Flexbox布局 */
+        .container {
+            display: flex;
+            height: 100%;
+            position: relative; /* 使 #county-name 相对于地图容器定位 */
+        }
+
+        /* 地图容器样式 */
+        #echarts-map {
+            flex: 3;
+            height: 100%;
+            position: relative; /* 使 #county-name 相对于地图容器定位 */
+            margin-left: 160px; /* 给地图容器添加左侧边距，腾出空间给侧边栏 */
+        }
+
+        /* 右侧区域样式 */
+        .charts {
+            flex: 1.1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        /* 每个图表容器 */
+        .chart-container {
+            flex: 1;
+            background-color:rgba(211, 211, 211, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 0px;
+        }
+
+        /* 县名称显示元素样式 */
+        #county-name {
+            position: absolute; /* 相对于地图容器定位 */
+            bottom: 10px; /* 距离地图底部 10px */
+            right: 10px; /* 距离地图右侧 10px */
+            color: white;
+            font-size: 16px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .weather-data-container {
+            position: absolute;
+            top: 100px;
+            left: 100px;
+            color: black; /* 改为黑色文字 */
+            padding: 15px;
+            z-index: 10;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .weather-data-container h3 {
+            margin-top: 0;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .weather-data-container p {
+            margin: 5px 0;
+        }
+
+        .weather-data-container span {
+            font-weight: bold;
+        }
+
+        /* 头部样式 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: white;
+            color: black;
+            width: 100vw;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-size: 2em;
+            margin: 0;
+            flex-grow: 1; /* 使标题占据剩余空间 */
+            text-align: center; /* 居中对齐标题 */
+        }
+
+        .header-date {
+            font-size: 0.8em;
+            margin: 0;
+            position: relative;
+            left: -80px; /* 调整左侧偏移量 */
+        }
+
+    </style>
+</head>
+<body>
+    <!-- 添加占位元素用于插入导航栏 -->
+    <div id="nav-placeholder"></div>
+
+    <div class="header">
+        <h1 class="header-title">和田地区气象监测大屏</h1>
+        <span class="header-date" id="current-date-time"></span>
+    </div>
+    <!-- 创建Flex容器 -->
+    <div class="container">
+        <!-- 地图容器 -->
+        <div id="echarts-map"></div>
+        <div id="county-name">点击显示县名称</div>
+
+        <!-- 右侧的图表区域 -->
+        <div class="charts">
+            <!-- 温度折线图 -->
+            <div id="temperature-chart" class="chart-container"></div>
+
+            <!-- 湿度折线图 -->
+            <div id="humidity-chart" class="chart-container"></div>
+
+            <!-- 降水量柱状图 -->
+            <div id="precipitation-chart" class="chart-container"></div>
+        </div>
+    </div>
+
+     <!-- 地图左上角的气象数据容器 -->
+    <div class="weather-data-container">
+        <h3>实时气象数据</h3>
+        <p>气温：<span id="temperature">{{ weather_data['temperature'] }}°C</span></p>
+        <p>湿度：<span id="humidity">{{ weather_data['humidity'] }}%</span></p>
+        <p>风速：<span id="windSpeed">{{ weather_data['wind_speed'] }} km/h</span></p>
+        <p>PM2.5：<span id="pm25">{{ weather_data['pm25'] }}µg/m³</span></p>
+        <p>PM10：<span id="pm10">{{ weather_data['pm10'] }}µg/m³</span></p>
+    </div>
+
+
+    <script>
+        // 从 Flask 模板引擎获取 username、identity 和 avatar_url
+        const username = "{{ username }}";
+        const identity = "{{ identity }}";
+        const avatarUrl = "{{ avatar_url }}"; // 头像 URL
+    </script>
+    <script src="/static/navbar.js"></script>
+    <script>
+        // 获取当前日期和时间并格式化
+        function updateDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekDay = weekDays[now.getDay()];
+
+            const formattedDate = `${year}-${month}-${day} ${weekDay} ${hours}:${minutes}:${seconds}`;
+            document.getElementById('current-date-time').textContent = formattedDate;
+        }
+
+        // 初始化时立即更新一次
+        updateDateTime();
+
+        // 每秒更新一次时间
+        setInterval(updateDateTime, 1000);
+
+
+        // 初始化ECharts地图
+        function initEChartsMap() {
+            var chartDom = document.getElementById('echarts-map');
+            var myChart = echarts.init(chartDom);
+
+            // 显示加载提示
+            myChart.showLoading();
+
+            $.get('{{ url_for("static", filename="data.geoJson") }}', function (data) {
+                echarts.registerMap('hetian', data);
+
+                // 获取地图数据
+                var mapFeatures = echarts.getMap('hetian').geoJson.features;
+                var mapData = mapFeatures.map(function(v) {
+                    return { name: v.properties.name, value: Math.random() * 100 };  // 假数据
+                });
+
+                // 地图的option配置
+                var optionMap = {
+                    geo: {
+                        map: 'hetian',  // 使用新的地图名称
+                        roam: false,  // 支持拖动和缩放
+                        aspectScale: 0.75,  // 地图纵横比
+                        layoutCenter: ["50%", "52.5%"],  // 地图的中心位置
+                        layoutSize: '86%',  // 地图大小
+                        itemStyle: {
+                            normal: {
+                                borderColor: 'rgba(133, 211, 223, 0.76)',  // 边框颜色
+                                borderWidth: 1.5,  // 边框宽度
+                                color: 'rgba(133, 211, 223, 0.76)',  // 区域默认颜色
+                                opacity: 0.8,  // 区域透明度
+                                shadowColor: 'rgba(0, 0, 0, 0.5)', // 阴影颜色
+                                shadowOffsetX: 0, // 阴影水平偏移
+                                shadowOffsetY: 25, // 阴影垂直偏移
+                                shadowBlur: 18 // 阴影模糊
+                            },
+                            emphasis: {
+                                areaColor: '#2a333d' , // 高亮区域颜色
+                            }
+                        },
+                        label: {
+                            normal: {
+                                show: true,
+                                textStyle: {
+                                    fontSize: 12,
+                                    fontWeight: 400,
+                                    color: '#fff'  // 标签颜色
+                                }
+                            },
+                            emphasis: {
+                                show: false  // 点击高亮时不显示标签
+                            }
+                        }
+                    },
+                    series: [{
+                        type: 'map',
+                        map: 'hetian',  // 同样使用新的地图名称
+                        data: mapData,
+                        zoom: 1,
+                        z: 1,
+                        aspectScale: 0.75,
+                        label: {
+                            show: true,
+                            textStyle: { color: '#fff' }
+                        },
+                        itemStyle: {
+                            normal: {
+                                borderColor: 'rgba(147, 235, 248, 1)',
+                                borderWidth: 0.5,
+                                areaColor: '#2B91B7',  // 默认区域颜色
+                                shadowColor: 'rgba(0, 0, 0, 0.1)', // 阴影颜色
+                                shadowOffsetX: 0, // 阴影水平偏移
+                                shadowOffsetY: 14, // 阴影垂直偏移
+                                shadowBlur: 10 // 阴影模糊
+                            },
+                            emphasis: {
+                                areaColor: '#013159' , // 高亮区域颜色
+                                label: {
+                                show: true,
+                                color: 'rgba(255, 255, 25, 1)',//鼠标移动到后的字号
+                                fontSize: 16,
+                                shadowColor: 'rgba(255, 215, 0, 0.7)', // 悬停时阴影颜色
+                                shadowOffsetX: 5, // 阴影水平偏移
+                                shadowOffsetY: 5, // 阴影垂直偏移
+                                shadowBlur: 15 // 阴影模糊
+                                },
+
+                           }
+                        }
+                    }]
+                };
+
+                // 设置地图配置
+                myChart.setOption(optionMap);
+                myChart.hideLoading();
+
+                // 设置冷却期标志和冷却时间（单位：毫秒）
+                let isCoolingDown = false;
+                const cooldownTime = 2000;  // 2秒冷却期
+
+                // 处理点击事件
+                myChart.on('click', function (params) {
+                    if (params.name) {
+                        // 如果在冷却期内，提示并返回
+                        if (isCoolingDown) {
+                            alert('请勿频繁点击');
+                            return;
+                        }
+
+                        // 获取点击的县名称
+                        var county = params.name;
+                        document.getElementById('county-name').textContent = `县: ${county}`;
+
+                        // 设置冷却期标志为 true
+                        isCoolingDown = true;
+
+                        // 发送数据到后端
+                        $.ajax({
+                            url: '/save_coordinates',
+                            method: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ county: county }),
+                            success: function (response) {
+                                if (response.status === 'success') {
+                                    // 更新页面显示天气数据
+                                    document.getElementById('temperature').textContent = `${response.weather.temperature}°C`;
+                                    document.getElementById('humidity').textContent = `${response.weather.humidity}%`;
+                                    document.getElementById('windSpeed').textContent = `${response.weather.wind_speed} km/h`;
+                                    document.getElementById('pm25').textContent = `${response.weather.pm25} µg/m³`;
+                                    document.getElementById('pm10').textContent = `${response.weather.pm10} µg/m³`;
+
+                                    // 更新图表数据
+                                    updateCharts(response.weather_data_seven);
+                                }
+                            },
+                            error: function (error) {
+                                console.error('发送失败:', error);
+                            },
+                            complete: function () {
+                                // 设置冷却期结束，允许下一次点击
+                                setTimeout(function () {
+                                    isCoolingDown = false;
+                                }, cooldownTime);
+                            }
+                        });
+                    }
+                });
+
+            });
+        }
+
+        // 页面加载时初始化地图
+        initEChartsMap();
+
+
+
+    // 更新图表数据并添加动画
+    function updateCharts(weatherData) {
+        // 提取天气数据
+        const dates = weatherData.map(day => day.date);
+        const temperatures_min = weatherData.map(day => parseInt(day.temperature_min));
+        const temperatures_max = weatherData.map(day => parseInt(day.temperature_max));
+        const humidities = weatherData.map(day => parseInt(day.humidity));
+        const wind_speeds = weatherData.map(day => parseInt(day.wind_speed));
+        const wind_directions = weatherData.map(day => parseInt(day.wind_direction));
+
+        // 固定坐标轴范围
+        const fixedXAxisRange = [Math.min(...dates), Math.max(...dates)];
+        const fixedYAxisRangeTemperature = [Math.min(...temperatures_min.concat(temperatures_max)) - 5, Math.max(...temperatures_min.concat(temperatures_max)) + 5];
+        const fixedYAxisRangeHumidity = [0, 100];
+
+        // 温度折线图数据（初始值为0）
+        const temperatureDataMin = {
+            x: dates,
+            y: Array(dates.length).fill(0),  // 初始时设置为 0
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: '最低温度',
+            marker: {
+                color: 'rgba(30,144,255,0.7)'
+            }
+        };
+        const temperatureDataMax = {
+            x: dates,
+            y: Array(dates.length).fill(0),  // 初始时设置为 0
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: '最高温度',
+            marker: {
+                color: 'rgba(255,140,0,0.7)'
+            }
+        };
+
+        // 湿度折线图数据（初始值为0）
+        const humidityData = {
+            x: dates,
+            y: Array(dates.length).fill(0),  // 初始时设置为 0
+            type: 'bar',
+            name: '湿度',
+             marker: {
+                color: 'rgba(0,206,209,0.3)'
+            }
+        };
+
+        // 对风向进行排序（按顺时针排序）
+        const sortedWindData = wind_directions.map((direction, index) => ({
+            direction: direction,
+            speed: wind_speeds[index],
+            date: dates[index]
+        }));
+
+        // 按风向排序，确保顺时针方向
+        sortedWindData.sort((a, b) => a.direction - b.direction);
+
+        // 获取排序后的风速和风向数据
+        const sortedWindSpeeds = sortedWindData.map(item => item.speed);
+        const sortedWindDirections = sortedWindData.map(item => item.direction);
+
+        // 初始化风力雷达图数据（闭合图）
+        const RadarData = {
+            r: Array(sortedWindSpeeds.length).fill(0),  // 初始时设置为0
+            theta: sortedWindDirections.concat(sortedWindDirections[0]),  // 保证闭合
+            type: 'scatterpolar',
+            mode: 'lines+markers',
+            name: '风力雷达图',
+            line: { color: 'rgba(0,0,139,0.6)', width: 2 },
+            fill: 'toself',
+            fillcolor: 'rgba(0, 0, 255, 0.3)',
+            marker: { size: 6 },
+        };
+
+        // 更新温度折线图
+        Plotly.react('temperature-chart', [temperatureDataMin, temperatureDataMax], {
+            title: '未来七日温度变化',
+            xaxis: { title: '日期', range: fixedXAxisRange },
+            yaxis: { title: '温度 (°C)', range: fixedYAxisRangeTemperature },
+            margin: { t: 70, b: 70, l: 70, r: 0 },
+            staticPlot: false,
+            displayModeBar: false,
+            dragmode: false,
+            plot_bgcolor: 'rgba(0, 0, 0, 0)',
+            paper_bgcolor: 'rgba(0, 0, 0, 0)',
+            scrollZoom: false
+        });
+
+        // 更新湿度折线图
+        Plotly.react('humidity-chart', [humidityData], {
+            title: '未来七日湿度变化',
+            xaxis: { title: '日期', range: fixedXAxisRange },
+            yaxis: { title: '湿度 (%)', range: fixedYAxisRangeHumidity },
+            margin: { t: 70, b: 70, l: 70, r: 40 },
+            staticPlot: true,
+            displayModeBar: false,
+            dragmode: false,
+            plot_bgcolor: 'rgba(0, 0, 0, 0)',
+            paper_bgcolor: 'rgba(0, 0, 0, 0)',
+            scrollZoom: false
+        });
+
+        // 使用 Plotly.newPlot 强制刷新风力雷达图
+        Plotly.newPlot('precipitation-chart', [RadarData], {
+            title: '未来七日风力变化',
+            polar: {
+                radialaxis: {
+                    visible: true,
+                    range: [0, Math.max(...sortedWindSpeeds) + 1] // 设置风速的最大值
+                }
+            },
+            margin: { t: 70, b: 20, l: 10, r: 10 },
+            staticPlot: false,
+            displayModeBar: false,
+            dragmode: false,
+            plot_bgcolor: 'rgba(0, 0, 0, 0)',
+            paper_bgcolor: 'rgba(0, 0, 0, 0)',
+            scrollZoom: false
+        });
+
+        // 动画更新风力雷达图
+        let currentR = Array(sortedWindSpeeds.length).fill(0);  // 初始化风速数据
+        let step = 0;
+        const totalSteps = 70;  // 动画步骤数
+        const intervalTime = 20;  // 每步的时间间隔，单位：毫秒
+
+        const interval = setInterval(() => {
+            if (step < totalSteps) {
+                // 逐步增加风速数据
+                for (let i = 0; i < currentR.length; i++) {
+                    currentR[i] = (sortedWindSpeeds[i] * step) / totalSteps;  // 逐步过渡风速
+                }
+
+                // 更新雷达图
+                Plotly.update('precipitation-chart', {
+                    r: [currentR.concat(currentR[0])],  // 确保r数组闭合
+                    theta: [sortedWindDirections.concat(sortedWindDirections[0])],  // 确保theta数组闭合
+                });
+
+                step++;
+            } else {
+                // 动画完成，清除定时器
+                clearInterval(interval);
+            }
+        }, intervalTime);  // 每次更新时间间隔
+
+        // 使用动画更新温度、湿度和风力雷达图
+        setTimeout(() => {
+
+            // 温度数据动画
+            Plotly.animate('temperature-chart', {
+                data: [
+                    {
+                        x: dates,
+                        y: temperatures_min,  // 目标数据
+                    },
+                    {
+                        x: dates,
+                        y: temperatures_max,  // 目标数据
+                    }
+                ],
+                layout: { title: '未来七日温度变化' }
+            }, {
+                frame: {
+                    duration: 2000,  // 动画持续时间
+                    redraw: false     // 每次数据变化时重绘图表
+                },
+                transition: {
+                    duration: 5000,  // 每次更新的过渡时间
+                    easing: 'ease-out'  // 缓动效果
+                }
+            });
+
+            // 湿度数据动画
+            Plotly.animate('humidity-chart', {
+                data: [{
+                    x: dates,
+                    y: humidities,  // 目标数据
+                }],
+                layout: { title: '未来七日湿度变化' }
+            }, {
+                frame: {
+                    duration: 2000,  // 动画持续时间
+                    redraw: false
+                },
+                transition: {
+                    duration: 5000,
+                    easing: 'ease-out'
+                }
+            });
+
+        });  // 使得动画稍后执行，确保图表已经更新并绘制完
+    }
+
+
+
+    // 动态加载七天天气数据并更新图表
+    function loadWeatherData(lon, lat) {
+        fetch(`/get_weather_data_seven?lon=${lon}&lat=${lat}`)
+            .then(response => response.json())
+            .then(data => {
+                updateCharts(data);
+            })
+            .catch(error => {
+                console.error('Error fetching weather data:', error);
+            });
+    }
+
+    // 页面初始化时加载数据（可以传入一个初始坐标）
+    window.onload = function() {
+        const initialLon = 116.4074; // 示例经度
+        const initialLat = 39.9042; // 示例纬度
+        loadWeatherData(initialLon, initialLat);
+    };
+
+     <!-- 显示闪现的消息 -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            var errorMessage = {{ messages[0] | tojson }};
+            alert(errorMessage);  // 弹出消息
+        {% endif %}
+    {% endwith %}
+
+    </script>
+</body>
+</html>

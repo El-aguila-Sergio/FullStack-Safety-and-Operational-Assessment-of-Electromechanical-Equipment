@@ -1,0 +1,132 @@
+<!-- navbar.html -->
+<!-- 左侧边栏切换按钮 -->
+<div class="toggle-sidebar" id="toggleSidebar"><span></span></div>
+
+<!-- 左侧边栏 -->
+<div class="sidebar" id="sidebar">
+    <!-- 圆形头像框和用户信息 -->
+    <div class="user-info">
+        <div class="avatar" id="avatar">
+            <span class="plus-sign">+</span>
+            <input type="file" id="avatar-upload" accept="image/*" style="display: none;" />
+        </div>
+        <div class="user-details">
+            <div class="username" id="username">{{ username }}</div>
+            <div class="role" id="role">身份：{{ identity }}</div>
+        </div>
+    </div>
+
+    <a href="/home">气象监测大屏</a>
+    <a href="/devices">查看预警信息</a>
+    <a href="/alerts">查看报警信息</a>
+    <a href="/upload">上传处理方案</a>
+    <a href="/logout">退出登录</a>
+</div>
+
+<style>
+    /* 侧边栏的基本样式 */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -200px; /* 默认隐藏，左侧偏移量为 -200px */
+        width: 200px;
+        height: 100%;
+        background-color: rgba(	44, 62, 80,0.95);
+        color: white;
+        transition: left 0.3s ease; /* 添加过渡动画 */
+        padding-top: 20px; /* 调整顶部内边距 */
+        z-index: 999;
+    }
+
+    /* 用户信息区域样式 */
+    .user-info {
+        display: flex; /* 使用 flex 布局 */
+        align-items: center; /* 垂直居中 */
+        padding: 10px; /* 内边距 */
+        margin-bottom: 20px; /* 与下方链接的间距 */
+    }
+
+    /* 圆形头像框样式 */
+    .avatar {
+        width: 50px; /* 头像框大小变小 */
+        height: 50px;
+        background-color: #34495e; /* 头像框背景色 */
+        border-radius: 50%; /* 圆形 */
+        margin-right: 10px; /* 与用户信息的间距 */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden; /* 确保图片裁剪为圆形 */
+        cursor: pointer; /* 鼠标悬停时显示手型 */
+    }
+
+    /* + 符号样式 */
+    .plus-sign {
+        font-size: 24px;
+        color: white;
+    }
+
+    /* 用户详细信息样式 */
+    .user-details {
+        display: flex;
+        flex-direction: column; /* 垂直排列用户名和身份信息 */
+    }
+
+    /* 用户名样式 */
+    .username {
+        font-size: 23px; /* 字体稍小 */
+        font-weight: bold;
+        margin-bottom: 2px; /* 与身份信息的间距 */
+    }
+
+    /* 身份信息样式 */
+    .role {
+        font-size: 12px; /* 字体稍小 */
+        color: #bdc3c7; /* 浅灰色 */
+    }
+
+    /* 侧边栏链接样式 */
+    .sidebar a {
+        display: block;
+        color: white;
+        padding: 15px;
+        text-decoration: none;
+        font-size: 18px;
+        transition: background-color 0.3s ease;
+    }
+
+    .sidebar a:hover {
+        background-color: #34495e;
+    }
+
+    /* 侧边栏切换按钮的样式 */
+    .toggle-sidebar {
+        position: fixed;
+        left: 20px;
+        top: 20px;
+        background-color: #2c3e50;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        z-index: 1000;
+        transition: left 0.3s ease;
+    }
+
+    .toggle-sidebar span {
+        display: block;
+        width: 20px;
+        height: 3px;
+        background-color: white;
+        transition: transform 0.3s ease;
+    }
+
+    /* 展开后的侧边栏切换按钮样式 */
+    .toggle-sidebar.open span {
+        transform: rotate(135deg);
+    }
+</style>

@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设备管理系统 - 机电设备安全评估系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 确保 body 占满整个视口 */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+
+        /* 整体背景 - 与气象监测大屏一致的风格 */
+        body {
+            background: 
+                linear-gradient(rgba(74, 85, 112, 0.8), rgba(66, 80, 122, 0.8)),
+                url('https://vcg00.cfp.cn/creative/vcg/800/new/VCG41N1358149692.jpg');
+            background-size: cover;
+            background-position: center;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 头部样式 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            background: rgba(0, 10, 30, 0.5);
+            color: #e0e0e0;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 150, 255, 0.3);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            position: relative;
+            flex-shrink: 0;
+            height: 50px; /* 固定高度 */
+        }
+
+        .header-title {
+            font-size: 1.8em;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+            color: #00c8ff;
+            text-shadow: 0 0 8px rgba(0, 200, 255, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .header-date {
+            font-size: 1em;
+            margin: 0;
+            position: relative;
+            left: -80px;
+            color: #00c8ff;
+            font-weight: bold;
+        }
+
+        /* 下拉菜单样式 */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            z-index: 1001;
+        }
+
+        .dropdown-btn {
+            background: linear-gradient(90deg, rgba(0, 180, 255, 0.7), rgba(60, 100, 180, 0.7));
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 8px rgba(0, 180, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-btn:hover {
+            background: linear-gradient(90deg, rgba(0, 200, 255, 0.8), rgba(80, 120, 200, 0.8));
+            transform: translateY(-2px);
+            box-shadow: 0 0 12px rgba(0, 180, 255, 0.5);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: rgba(0, 10, 30, 0.9);
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+        }
+
+        .dropdown-content a {
+            color: #e0e0e0;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(0, 150, 255, 0.3);
+            color: #00c8ff;
+            padding-left: 20px;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-icon {
+            font-size: 18px;
+        }
+
+        /* 主容器 */
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            background: rgba(0, 10, 30, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.3);
+            border: 1px solid rgba(0, 180, 255, 0.4);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            flex-grow: 1;
+            position: relative;
+            
+            /* 添加滚动条 */
+            overflow-y: auto;
+            max-height: calc(100vh - 100px);
+        }
+
+        /* 自定义滚动条样式 */
+        .container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .container::-webkit-scrollbar-track {
+            background: rgba(0, 20, 40, 0.3);
+            border-radius: 4px;
+        }
+
+        .container::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #00c8ff, #4a69bd);
+            border-radius: 4px;
+        }
+
+        .container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #00a8df, #3a59ad);
+        }
+
+        /* Firefox滚动条样式 */
+        .container {
+            scrollbar-width: thin;
+            scrollbar-color: #00c8ff rgba(0, 20, 40, 0.3);
+        }
+
+        /* 内容区域 */
+        .content {
+            padding: 25px;
+            min-height: 600px;
+        }
+
+        /* 操作区域 */
+        .action-section {
+            background: rgba(0, 20, 40, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-title {
+            font-size: 1.5em;
+            margin: 0 0 15px 0;
+            color: #00c8ff;
+            text-align: center;
+        }
+
+        .action-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: rgba(0, 10, 30, 0.5);
+            border-radius: 8px;
+            padding: 5px;
+        }
+
+        .action-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            color: #a0d0ff;
+        }
+
+        .action-tab.active {
+            background: rgba(0, 150, 255, 0.3);
+            color: #00c8ff;
+            box-shadow: 0 0 10px rgba(0, 150, 255, 0.2);
+        }
+
+        .action-form {
+            display: none;
+        }
+
+        .action-form.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a0d0ff;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(0, 30, 60, 0.5);
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            border-radius: 5px;
+            color: #e0e0e0;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #00c8ff;
+            box-shadow: 0 0 10px rgba(0, 200, 255, 0.3);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .action-btn {
+            background: linear-gradient(90deg, #00c8ff, #4a69bd);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-top: 10px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 200, 255, 0.4);
+        }
+
+        /* 设备列表区域 */
+        .devices-section {
+            background: rgba(0, 20, 40, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .devices-title {
+            font-size: 1.5em;
+            margin: 0 0 20px 0;
+            color: #00c8ff;
+            text-align: center;
+        }
+
+        .devices-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: rgba(0, 10, 30, 0.5);
+            border-radius: 8px;
+            padding: 5px;
+        }
+
+        .devices-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            color: #a0d0ff;
+        }
+
+        .devices-tab.active {
+            background: rgba(0, 150, 255, 0.3);
+            color: #00c8ff;
+            box-shadow: 0 0 10px rgba(0, 150, 255, 0.2);
+        }
+
+        .devices-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .device-card {
+            background: rgba(0, 30, 60, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .device-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 200, 255, 0.2);
+            border-color: rgba(0, 200, 255, 0.5);
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 150, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .device-name {
+            font-size: 1.2em;
+            color: #00c8ff;
+            margin: 0;
+        }
+
+        .device-owner {
+            font-size: 0.8em;
+            color: #a0d0ff;
+            background: rgba(0, 150, 255, 0.2);
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+
+        .device-detail {
+            font-size: 0.9em;
+            color: #a0d0ff;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .device-detail span {
+            color: #00c8ff;
+        }
+
+        .device-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .device-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .device-btn.view {
+            background: rgba(0, 150, 255, 0.3);
+            color: #00c8ff;
+        }
+
+        .device-btn.edit {
+            background: rgba(46, 204, 113, 0.3);
+            color: #2ecc71;
+        }
+
+        .device-btn.delete {
+            background: rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+        }
+
+        .device-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: rgba(0, 20, 40, 0.9);
+            width: 90%;
+            max-width: 600px;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.4);
+            border: 1px solid rgba(0, 150, 255, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 150, 255, 0.3);
+            padding-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 1.4em;
+            color: #00c8ff;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #a0d0ff;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #00c8ff;
+        }
+
+        /* 加载和错误提示 */
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #a0d0ff;
+        }
+
+        .error-message {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: center;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                margin: 15px auto;
+                max-height: calc(100vh - 80px);
+            }
+            
+            .header-title {
+                font-size: 1.8em;
+            }
+            
+            .header-date {
+                left: 0;
+                font-size: 0.9em;
+            }
+            
+            .devices-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .dropdown-btn {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <div class="header">
+        <!-- 左侧下拉菜单 -->
+        <div class="dropdown">
+            <button class="dropdown-btn">
+                <i class="dropdown-icon">☰</i> 导航菜单
+            </button>
+            <div class="dropdown-content">
+                <a href="dashboard.html">气象监测大屏</a>
+                <a href="data-analysis.html">数据分析中心</a>
+                <a href="equipment-management.html">设备管理系统</a>
+                <a href="weather-forecast.html">气象预报</a>
+                <a href="alert-center.html">预警中心</a>
+                <a href="user-center.html">用户个人中心</a>
+            </div>
+        </div>
+        <h1 class="header-title">设备管理系统</h1>
+        <span class="header-date" id="current-date-time"></span>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <div class="content">
+            <!-- 设备列表区域 -->
+            <div class="devices-section">
+                <h2 class="devices-title">设备列表</h2>
+                
+                <div class="devices-tabs">
+                    <div class="devices-tab active" data-tab="my">我的设备</div>
+                    <div class="devices-tab" data-tab="public">公开设备</div>
+                </div>
+                
+                <div id="myDevicesContainer" class="devices-container">
+                    <div class="loading">正在加载我的设备...</div>
+                </div>
+                
+                <div id="publicDevicesContainer" class="devices-container" style="display: none;">
+                    <div class="loading">正在加载公开设备...</div>
+                </div>
+            </div>
+
+            <!-- 操作区域 -->
+            <div class="action-section">
+                <h2 class="action-title">设备管理操作</h2>
+                
+                <div class="action-tabs">
+                    <div class="action-tab active" data-tab="create">创建设备</div>
+                    <div class="action-tab" data-tab="update">更新设备</div>
+                    <div class="action-tab" data-tab="add">添加设备</div>
+                    <div class="action-tab" data-tab="remove">移除设备</div>
+                </div>
+                
+                <!-- 创建设备表单 -->
+                <form id="createForm" class="action-form active">
+                    <div class="form-group">
+                        <label for="deviceName">设备名称</label>
+                        <input type="text" id="deviceName" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="minTemp">最低温度 (°C)</label>
+                            <input type="number" id="minTemp" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="maxTemp">最高温度 (°C)</label>
+                            <input type="number" id="maxTemp" step="0.1" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="minHumidity">最低湿度 (%)</label>
+                            <input type="number" id="minHumidity" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="maxHumidity">最高湿度 (%)</label>
+                            <input type="number" id="maxHumidity" step="0.1" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="minWindSpeed">最低风速 (m/s)</label>
+                            <input type="number" id="minWindSpeed" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="maxWindSpeed">最高风速 (m/s)</label>
+                            <input type="number" id="maxWindSpeed" step="0.1" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="isPublic">是否公开</label>
+                        <select id="isPublic" required>
+                            <option value="true">是</option>
+                            <option value="false">否</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="action-btn">创建设备</button>
+                </form>
+                
+                <!-- 更新设备表单 -->
+                <form id="updateForm" class="action-form">
+                    <div class="form-group">
+                        <label for="updateDeviceId">设备ID</label>
+                        <input type="number" id="updateDeviceId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateDeviceName">设备名称</label>
+                        <input type="text" id="updateDeviceName" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="updateMinTemp">最低温度 (°C)</label>
+                            <input type="number" id="updateMinTemp" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateMaxTemp">最高温度 (°C)</label>
+                            <input type="number" id="updateMaxTemp" step="0.1" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="updateMinHumidity">最低湿度 (%)</label>
+                            <input type="number" id="updateMinHumidity" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateMaxHumidity">最高湿度 (%)</label>
+                            <input type="number" id="updateMaxHumidity" step="0.1" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="updateMinWindSpeed">最低风速 (m/s)</label>
+                            <input type="number" id="updateMinWindSpeed" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="updateMaxWindSpeed">最高风速 (m/s)</label>
+                            <input type="number" id="updateMaxWindSpeed" step="0.1" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateIsPublic">是否公开</label>
+                        <select id="updateIsPublic" required>
+                            <option value="true">是</option>
+                            <option value="false">否</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="action-btn">更新设备</button>
+                </form>
+                
+                <!-- 添加设备表单 -->
+                <form id="addForm" class="action-form">
+                    <div class="form-group">
+                        <label for="addDeviceId">设备ID</label>
+                        <input type="number" id="addDeviceId" required>
+                    </div>
+                    <button type="submit" class="action-btn">添加到我的设备</button>
+                </form>
+                
+                <!-- 移除设备表单 -->
+                <form id="removeForm" class="action-form">
+                    <div class="form-group">
+                        <label for="removeDeviceId">设备ID</label>
+                        <input type="number" id="removeDeviceId" required>
+                    </div>
+                    <button type="submit" class="action-btn">从我的设备中移除</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 设备详情模态框 -->
+    <div id="deviceDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">设备详情</h3>
+                <button class="close-btn" onclick="closeModal('deviceDetailModal')">&times;</button>
+            </div>
+            <div id="deviceDetailContent">
+                <!-- 设备详情内容将在这里动态加载 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取当前日期和时间并格式化
+        function updateDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekDay = weekDays[now.getDay()];
+
+            const formattedDate = `${year}-${month}-${day} ${weekDay} ${hours}:${minutes}:${seconds}`;
+            document.getElementById('current-date-time').textContent = formattedDate;
+        }
+
+        // 初始化时立即更新一次
+        updateDateTime();
+
+        // 每秒更新一次时间
+        setInterval(updateDateTime, 1000);
+
+
+        
+        // API 基础URL
+        const API_BASE_URL = '/api/device';
+        
+        // 全局变量
+        let currentUserId = null;
+        let currentUserData = null;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            bindEvents();
+            loadMyDevices();
+        });
+
+        // 检查登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (!token || !user) {
+                window.location.href = '/';
+                return;
+            }
+            
+            currentUserData = JSON.parse(user);
+            currentUserId = currentUserData.id || 1;
+        }
+
+
+        // 绑定事件
+        function bindEvents() {
+            // 操作标签切换
+            document.querySelectorAll('.action-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.action-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    document.querySelectorAll('.action-form').forEach(form => form.classList.remove('active'));
+                    const tabName = this.getAttribute('data-tab');
+                    document.getElementById(`${tabName}Form`).classList.add('active');
+                });
+            });
+            
+            // 设备列表标签切换
+            document.querySelectorAll('.devices-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.devices-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const tabName = this.getAttribute('data-tab');
+                    if (tabName === 'my') {
+                        document.getElementById('myDevicesContainer').style.display = 'grid';
+                        document.getElementById('publicDevicesContainer').style.display = 'none';
+                        loadMyDevices();
+                    } else {
+                        document.getElementById('myDevicesContainer').style.display = 'none';
+                        document.getElementById('publicDevicesContainer').style.display = 'grid';
+                        loadPublicDevices();
+                    }
+                });
+            });
+            
+            // 表单提交事件
+            document.getElementById('createForm').addEventListener('submit', handleCreateDevice);
+            document.getElementById('updateForm').addEventListener('submit', handleUpdateDevice);
+            document.getElementById('addForm').addEventListener('submit', handleAddDevice);
+            document.getElementById('removeForm').addEventListener('submit', handleRemoveDevice);
+        }
+
+        // 4.1 创建设备
+        async function handleCreateDevice(e) {
+            e.preventDefault();
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = '/';
+                return;
+            }
+            
+            const deviceData = {
+                name: document.getElementById('deviceName').value,
+                userId: currentUserId,
+                minTemperature: parseFloat(document.getElementById('minTemp').value),
+                maxTemperature: parseFloat(document.getElementById('maxTemp').value),
+                minHumidity: parseFloat(document.getElementById('minHumidity').value),
+                maxHumidity: parseFloat(document.getElementById('maxHumidity').value),
+                minWindSpeed: parseFloat(document.getElementById('minWindSpeed').value),
+                maxWindSpeed: parseFloat(document.getElementById('maxWindSpeed').value),
+                isPublic: document.getElementById('isPublic').value === 'true'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(deviceData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('设备创建成功！');
+                    document.getElementById('createForm').reset();
+                    loadMyDevices();
+                } else {
+                    alert('设备创建失败：' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('创建设备失败:', error);
+                alert('创建设备失败，请检查网络连接');
+            }
+        }
+
+        // 4.2 更新设备信息
+        async function handleUpdateDevice(e) {
+            e.preventDefault();
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = '/';
+                return;
+            }
+            
+            const deviceId = document.getElementById('updateDeviceId').value;
+            const deviceData = {
+                userId: currentUserId,
+                name: document.getElementById('updateDeviceName').value,
+                minTemperature: parseFloat(document.getElementById('updateMinTemp').value),
+                maxTemperature: parseFloat(document.getElementById('updateMaxTemp').value),
+                minHumidity: parseFloat(document.getElementById('updateMinHumidity').value),
+                maxHumidity: parseFloat(document.getElementById('updateMaxHumidity').value),
+                minWindSpeed: parseFloat(document.getElementById('updateMinWindSpeed').value),
+                maxWindSpeed: parseFloat(document.getElementById('updateMaxWindSpeed').value),
+                isPublic: document.getElementById('updateIsPublic').value === 'true'
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/${deviceId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(deviceData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('设备更新成功！');
+                    document.getElementById('updateForm').reset();
+                    loadMyDevices();
+                } else {
+                    alert('设备更新失败：' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('更新设备失败:', error);
+                alert('更新设备失败，请检查网络连接');
+            }
+        }
+
+        // 4.3 删除设备
+        async function deleteDevice(deviceId) {
+            if (!confirm('确定要删除这个设备吗？此操作不可撤销。')) {
+                return;
+            }
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = '/';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/${deviceId}/${currentUserId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('设备删除成功！');
+                    loadMyDevices();
+                } else {
+                    alert('设备删除失败：' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('删除设备失败:', error);
+                alert('删除设备失败，请检查网络连接');
+            }
+        }
+
+        // 4.4 获取我的设备
+        async function loadMyDevices() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                return;
+            }
+            
+            const container = document.getElementById('myDevicesContainer');
+            container.innerHTML = '<div class="loading">正在加载我的设备...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/my/${currentUserId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayDevices(result.data, container, true);
+                } else {
+                    container.innerHTML = '<div class="error-message">加载我的设备失败：' + (result.message || '未知错误') + '</div>';
+                }
+            } catch (error) {
+                console.error('加载我的设备失败:', error);
+                container.innerHTML = '<div class="error-message">加载我的设备失败，请检查网络连接</div>';
+            }
+        }
+
+        // 4.5 获取公开设备
+        async function loadPublicDevices() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                return;
+            }
+            
+            const container = document.getElementById('publicDevicesContainer');
+            container.innerHTML = '<div class="loading">正在加载公开设备...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/public`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayDevices(result.data, container, false);
+                } else {
+                    container.innerHTML = '<div class="error-message">加载公开设备失败：' + (result.message || '未知错误') + '</div>';
+                }
+            } catch (error) {
+                console.error('加载公开设备失败:', error);
+                container.innerHTML = '<div class="error-message">加载公开设备失败，请检查网络连接</div>';
+            }
+        }
+
+        // 4.6 添加设备到我的
+        async function handleAddDevice(e) {
+            e.preventDefault();
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = '/';
+                return;
+            }
+            
+            const deviceId = document.getElementById('addDeviceId').value;
+            const addData = {
+                deviceId: parseInt(deviceId),
+                userId: currentUserId
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/add-to-my`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(addData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('设备添加成功！');
+                    document.getElementById('addForm').reset();
+                    loadMyDevices();
+                } else {
+                    alert('设备添加失败：' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('添加设备失败:', error);
+                alert('添加设备失败，请检查网络连接');
+            }
+        }
+
+        // 4.7 从我的移除设备
+        async function handleRemoveDevice(e) {
+            e.preventDefault();
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = '/';
+                return;
+            }
+            
+            const deviceId = document.getElementById('removeDeviceId').value;
+            const removeData = {
+                deviceId: parseInt(deviceId),
+                userId: currentUserId
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/remove-from-my`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify(removeData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('设备移除成功！');
+                    document.getElementById('removeForm').reset();
+                    loadMyDevices();
+                } else {
+                    alert('设备移除失败：' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('移除设备失败:', error);
+                alert('移除设备失败，请检查网络连接');
+            }
+        }
+
+        // 4.8 获取设备详情
+        async function viewDeviceDetail(deviceId) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = '/';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/${deviceId}/${currentUserId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayDeviceDetail(result.data);
+                } else {
+                    alert('获取设备详情失败：' + (result.message || '未知错误'));
+                }
+            } catch (error) {
+                console.error('获取设备详情失败:', error);
+                alert('获取设备详情失败，请检查网络连接');
+            }
+        }
+
+        // 显示设备列表
+        function displayDevices(devices, container, isMyDevices) {
+            if (!devices || devices.length === 0) {
+                container.innerHTML = '<div class="loading">暂无设备数据</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            devices.forEach(device => {
+                const deviceCard = document.createElement('div');
+                deviceCard.className = 'device-card';
+                
+                deviceCard.innerHTML = `
+                    <div class="device-header">
+                        <h3 class="device-name">${device.name}</h3>
+                        <span class="device-owner">${device.isOwner ? '所有者' : '已添加'}</span>
+                    </div>
+                    <div class="device-detail">
+                        <span>温度范围:</span> ${device.minTemperature}°C - ${device.maxTemperature}°C
+                    </div>
+                    <div class="device-detail">
+                        <span>湿度范围:</span> ${device.minHumidity}% - ${device.maxHumidity}%
+                    </div>
+                    <div class="device-detail">
+                        <span>风速范围:</span> ${device.minWindSpeed}m/s - ${device.maxWindSpeed}m/s
+                    </div>
+                    <div class="device-detail">
+                        <span>公开状态:</span> ${device.isPublic ? '公开' : '私有'}
+                    </div>
+                    <div class="device-detail">
+                        <span>创建时间:</span> ${new Date(device.createdTime).toLocaleDateString()}
+                    </div>
+                    <div class="device-actions">
+                        <button class="device-btn view" onclick="viewDeviceDetail(${device.id})">查看详情</button>
+                        ${device.isOwner ? `
+                            <button class="device-btn edit" onclick="editDevice(${device.id})">编辑</button>
+                            <button class="device-btn delete" onclick="deleteDevice(${device.id})">删除</button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                container.appendChild(deviceCard);
+            });
+        }
+
+        // 显示设备详情
+        function displayDeviceDetail(device) {
+            const modal = document.getElementById('deviceDetailModal');
+            const content = document.getElementById('deviceDetailContent');
+            
+            content.innerHTML = `
+                <div class="device-detail">
+                    <span>设备ID:</span> ${device.id}
+                </div>
+                <div class="device-detail">
+                    <span>设备名称:</span> ${device.name}
+                </div>
+                <div class="device-detail">
+                    <span>温度范围:</span> ${device.minTemperature}°C - ${device.maxTemperature}°C
+                </div>
+                <div class="device-detail">
+                    <span>湿度范围:</span> ${device.minHumidity}% - ${device.maxHumidity}%
+                </div>
+                <div class="device-detail">
+                    <span>风速范围:</span> ${device.minWindSpeed}m/s - ${device.maxWindSpeed}m/s
+                </div>
+                <div class="device-detail">
+                    <span>公开状态:</span> ${device.isPublic ? '公开' : '私有'}
+                </div>
+                <div class="device-detail">
+                    <span>所有者:</span> ${device.isOwner ? '是' : '否'}
+                </div>
+                <div class="device-detail">
+                    <span>创建时间:</span> ${new Date(device.createdTime).toLocaleString()}
+                </div>
+            `;
+            
+            modal.style.display = 'flex';
+        }
+
+        // 编辑设备（预填充表单）
+        function editDevice(deviceId) {
+            // 切换到更新设备标签
+            document.querySelectorAll('.action-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector('[data-tab="update"]').classList.add('active');
+            
+            document.querySelectorAll('.action-form').forEach(form => form.classList.remove('active'));
+            document.getElementById('updateForm').classList.add('active');
+            
+            // 获取设备详情并填充表单
+            viewDeviceDetail(deviceId).then(() => {
+                // 这里可以添加从详情中获取数据并填充表单的逻辑
+                document.getElementById('updateDeviceId').value = deviceId;
+            });
+        }
+
+        // 关闭模态框
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

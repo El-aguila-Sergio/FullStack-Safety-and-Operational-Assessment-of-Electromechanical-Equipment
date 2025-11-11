@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预警中心 - 机电设备安全评估系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 确保 body 占满整个视口 */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+
+        /* 整体背景 - 与气象监测大屏一致的风格 */
+        body {
+            background: 
+                linear-gradient(rgba(74, 85, 112, 0.8), rgba(66, 80, 122, 0.8)),
+                url('https://vcg00.cfp.cn/creative/vcg/800/new/VCG41N1358149692.jpg');
+            background-size: cover;
+            background-position: center;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 头部样式 - 变窄版本 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            background: rgba(0, 10, 30, 0.5);
+            color: #e0e0e0;
+            width: 100%;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 150, 255, 0.3);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            position: relative;
+            flex-shrink: 0;
+            height: 50px;
+        }
+
+        .header-title {
+            font-size: 1.6em;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+            color: #00c8ff;
+            text-shadow: 0 0 6px rgba(0, 200, 255, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .header-date {
+            font-size: 0.9em;
+            margin: 0;
+            position: relative;
+            left: -60px;
+            color: #00c8ff;
+            font-weight: bold;
+        }
+
+        /* 下拉菜单样式 */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            z-index: 1001;
+        }
+
+        .dropdown-btn {
+            background: linear-gradient(90deg, rgba(0, 180, 255, 0.7), rgba(60, 100, 180, 0.7));
+            color: white;
+            padding: 6px 12px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 0 6px rgba(0, 180, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-btn:hover {
+            background: linear-gradient(90deg, rgba(0, 200, 255, 0.8), rgba(80, 120, 200, 0.8));
+            transform: translateY(-2px);
+            box-shadow: 0 0 12px rgba(0, 180, 255, 0.5);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: rgba(0, 10, 30, 0.9);
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+        }
+
+        .dropdown-content a {
+            color: #e0e0e0;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(0, 150, 255, 0.3);
+            color: #00c8ff;
+            padding-left: 20px;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-icon {
+            font-size: 18px;
+        }
+
+        /* 主容器 */
+        .container {
+            width: 95%;
+            max-width: 1400px;
+            margin: 10px auto;
+            background: rgba(0, 10, 30, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.3);
+            border: 1px solid rgba(0, 180, 255, 0.4);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            flex-grow: 1;
+            position: relative;
+            
+            /* 添加滚动条 */
+            overflow-y: auto;
+            max-height: calc(100vh - 70px);
+        }
+
+        /* 自定义滚动条样式 */
+        .container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .container::-webkit-scrollbar-track {
+            background: rgba(0, 20, 40, 0.3);
+            border-radius: 4px;
+        }
+
+        .container::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #00c8ff, #4a69bd);
+            border-radius: 4px;
+        }
+
+        .container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #00a8df, #3a59ad);
+        }
+
+        /* Firefox滚动条样式 */
+        .container {
+            scrollbar-width: thin;
+            scrollbar-color: #00c8ff rgba(0, 20, 40, 0.3);
+        }
+
+        /* 内容区域 */
+        .content {
+            padding: 25px;
+            min-height: 600px;
+        }
+
+        /* 查询区域 */
+        .query-section {
+            background: rgba(0, 20, 40, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .query-title {
+            font-size: 1.5em;
+            margin: 0 0 15px 0;
+            color: #00c8ff;
+            text-align: center;
+        }
+
+        .query-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a0d0ff;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(0, 30, 60, 0.5);
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            border-radius: 5px;
+            color: #e0e0e0;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .form-group select:focus, .form-group input:focus {
+            outline: none;
+            border-color: #00c8ff;
+            box-shadow: 0 0 10px rgba(0, 200, 255, 0.3);
+        }
+
+        .query-btn {
+            background: linear-gradient(90deg, #00c8ff, #4a69bd);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            letter-spacing: 1px;
+            height: fit-content;
+        }
+
+        .query-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 200, 255, 0.4);
+        }
+
+        /* 结果区域 */
+        .results-section {
+            background: rgba(0, 20, 40, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 25px;
+        }
+
+        .results-title {
+            font-size: 1.5em;
+            margin: 0 0 20px 0;
+            color: #00c8ff;
+            text-align: center;
+        }
+
+        /* 预警报告区域 */
+        .report-section {
+            background: rgba(0, 20, 40, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .report-title {
+            font-size: 1.5em;
+            margin: 0 0 20px 0;
+            color: #00c8ff;
+            text-align: center;
+        }
+
+        /* 设备信息卡片 */
+        .device-card {
+            background: rgba(0, 30, 60, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .device-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 15px rgba(0, 200, 255, 0.2);
+            border-color: rgba(0, 200, 255, 0.5);
+        }
+
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 150, 255, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .device-name {
+            font-size: 1.2em;
+            color: #00c8ff;
+            margin: 0;
+        }
+
+        .device-thresholds {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .threshold-item {
+            font-size: 0.9em;
+            color: #a0d0ff;
+        }
+
+        .threshold-value {
+            color: #00c8ff;
+            font-weight: bold;
+        }
+
+        /* 天气预报表格 */
+        .weather-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .weather-table th, .weather-table td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 150, 255, 0.2);
+        }
+
+        .weather-table th {
+            background: rgba(0, 150, 255, 0.2);
+            color: #00c8ff;
+            font-weight: bold;
+        }
+
+        .weather-table tr:hover {
+            background: rgba(0, 150, 255, 0.1);
+        }
+
+        /* 预警样式 */
+        .alert-high {
+            color: #ff6b6b;
+            font-weight: bold;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .alert-low {
+            color: #4ecdc4;
+            font-weight: bold;
+            background: rgba(78, 205, 196, 0.1);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+
+        .alert-normal {
+            color: #a0d0ff;
+        }
+
+        /* 报告摘要 */
+        .report-summary {
+            background: rgba(0, 30, 60, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #00c8ff;
+        }
+
+        .summary-title {
+            font-size: 1.1em;
+            color: #00c8ff;
+            margin-bottom: 10px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0, 150, 255, 0.1);
+        }
+
+        .summary-label {
+            color: #a0d0ff;
+        }
+
+        .summary-value {
+            color: #00c8ff;
+            font-weight: bold;
+        }
+
+        /* 加载和错误提示 */
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: #a0d0ff;
+        }
+
+        .error-message {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            text-align: center;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                margin: 15px auto;
+                max-height: calc(100vh - 60px);
+            }
+            
+            .header-title {
+                font-size: 1.4em;
+            }
+            
+            .header-date {
+                left: 0;
+                font-size: 0.8em;
+            }
+            
+            .dropdown-btn {
+                padding: 5px 10px;
+                font-size: 12px;
+            }
+            
+            .query-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .device-thresholds {
+                grid-template-columns: 1fr;
+            }
+            
+            .weather-table {
+                font-size: 0.8em;
+            }
+            
+            .weather-table th, .weather-table td {
+                padding: 8px 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <div class="header">
+        <!-- 左侧下拉菜单 -->
+        <div class="dropdown">
+            <button class="dropdown-btn">
+                <i class="dropdown-icon">☰</i> 导航菜单
+            </button>
+            <div class="dropdown-content">
+                <a href="dashboard.html">气象监测大屏</a>
+                <a href="data-analysis.html">数据分析中心</a>
+                <a href="device-management.html">设备管理系统</a>
+                <a href="weather-forecast.html">气象预报</a>
+                <a href="alert-center.html">预警中心</a>
+                <a href="user-center.html">用户个人中心</a>
+            </div>
+        </div>
+        <h1 class="header-title">预警中心</h1>
+        <span class="header-date" id="current-date-time"></span>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <div class="content">
+            <!-- 查询区域 -->
+            <div class="query-section">
+                <h2 class="query-title">设备数据分析</h2>
+                <div class="query-form">
+                    <div class="form-group">
+                        <label for="county">选择县名称</label>
+                        <select id="county" required>
+                            <option value="">请选择县名称</option>
+                            <option value="和田市">和田市</option>
+                            <option value="和田县">和田县</option>
+                            <option value="墨玉县">墨玉县</option>
+                            <option value="皮山县">皮山县</option>
+                            <option value="洛浦县">洛浦县</option>
+                            <option value="策勒县">策勒县</option>
+                            <option value="于田县">于田县</option>
+                            <option value="民丰县">民丰县</option>
+                            <option value="且末县">且末县</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="device">选择设备</label>
+                        <select id="device" required>
+                            <option value="">请先选择县名称</option>
+                        </select>
+                    </div>
+                    <button type="button" class="query-btn" id="analyzeBtn">分析数据</button>
+                </div>
+            </div>
+            
+            <!-- 结果区域 -->
+            <div class="results-section">
+                <h2 class="results-title">分析结果</h2>
+                <div id="deviceInfo" class="device-info">
+                    <!-- 设备信息将在这里显示 -->
+                </div>
+                <div id="weatherData" class="weather-data">
+                    <!-- 天气数据将在这里显示 -->
+                </div>
+            </div>
+            
+            <!-- 预警报告区域 -->
+            <div class="report-section">
+                <h2 class="report-title">预警报告</h2>
+                <div id="reportContent" class="report-content">
+                    <!-- 预警报告将在这里生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取当前日期和时间并格式化
+        function updateDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekDay = weekDays[now.getDay()];
+
+            const formattedDate = `${year}-${month}-${day} ${weekDay} ${hours}:${minutes}:${seconds}`;
+            document.getElementById('current-date-time').textContent = formattedDate;
+        }
+
+        // 初始化时立即更新一次
+        updateDateTime();
+
+        // 每秒更新一次时间
+        setInterval(updateDateTime, 1000);
+
+
+
+
+        // API 基础URL
+        const API_BASE_URL = '/api';
+        const WEATHER_API_URL = '/weather/forecast-county';
+        
+        // 全局变量
+        let currentUserId = null;
+        let currentUserData = null;
+        let userDevices = [];
+        let currentWeatherData = null;
+        let currentDevice = null;
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            bindEvents();
+            loadUserDevices();
+        });
+
+        // 检查登录状态
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (!token || !user) {
+                window.location.href = '/';
+                return;
+            }
+            
+            currentUserData = JSON.parse(user);
+            currentUserId = currentUserData.id || 1;
+        }
+
+
+        // 绑定事件
+        function bindEvents() {
+            // 县选择变化事件
+            document.getElementById('county').addEventListener('change', function() {
+                updateDeviceList(this.value);
+            });
+            
+            // 分析按钮点击事件
+            document.getElementById('analyzeBtn').addEventListener('click', function() {
+                analyzeData();
+            });
+        }
+
+        // 4.4 获取我的设备
+        async function loadUserDevices() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/device/my/${currentUserId}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    userDevices = result.data;
+                    console.log('用户设备加载成功:', userDevices);
+                } else {
+                    console.error('加载用户设备失败:', result.message);
+                }
+            } catch (error) {
+                console.error('加载用户设备失败:', error);
+            }
+        }
+
+        // 更新设备列表
+        function updateDeviceList(county) {
+            const deviceSelect = document.getElementById('device');
+            deviceSelect.innerHTML = '<option value="">请选择设备</option>';
+            
+            if (!county) {
+                return;
+            }
+            
+            // 这里可以根据县名称过滤设备，目前显示所有设备
+            userDevices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.id;
+                option.textContent = device.name;
+                deviceSelect.appendChild(option);
+            });
+        }
+
+        // 分析数据
+        async function analyzeData() {
+            const county = document.getElementById('county').value;
+            const deviceId = document.getElementById('device').value;
+            
+            if (!county || !deviceId) {
+                alert('请选择县名称和设备');
+                return;
+            }
+            
+            // 获取选中的设备
+            currentDevice = userDevices.find(device => device.id == deviceId);
+            if (!currentDevice) {
+                alert('未找到选中的设备信息');
+                return;
+            }
+            
+            // 显示设备信息
+            displayDeviceInfo(currentDevice);
+            
+            // 获取天气预报数据
+            await fetchWeatherData(county);
+            
+            // 生成预警报告
+            generateAlertReport();
+        }
+
+        // 获取天气预报数据
+        async function fetchWeatherData(county) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                window.location.href = '/';
+                return;
+            }
+            
+            document.getElementById('weatherData').innerHTML = '<div class="loading">正在获取天气预报数据...</div>';
+            
+            try {
+                const response = await fetch(API_BASE_URL + WEATHER_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ county })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentWeatherData = result.data.forecastData;
+                    displayWeatherData(currentWeatherData);
+                } else {
+                    document.getElementById('weatherData').innerHTML = '<div class="error-message">获取天气预报失败：' + (result.message || '未知错误') + '</div>';
+                }
+            } catch (error) {
+                console.error('获取天气预报失败:', error);
+                document.getElementById('weatherData').innerHTML = '<div class="error-message">获取天气预报失败，请检查网络连接</div>';
+            }
+        }
+
+        // 显示设备信息
+        function displayDeviceInfo(device) {
+            const deviceInfo = document.getElementById('deviceInfo');
+            
+            deviceInfo.innerHTML = `
+                <div class="device-card">
+                    <div class="device-header">
+                        <h3 class="device-name">${device.name}</h3>
+                        <span class="device-owner">${device.isOwner ? '所有者' : '已添加'}</span>
+                    </div>
+                    <div class="device-thresholds">
+                        <div class="threshold-item">
+                            <span>温度范围:</span> 
+                            <span class="threshold-value">${device.minTemperature}°C - ${device.maxTemperature}°C</span>
+                        </div>
+                        <div class="threshold-item">
+                            <span>湿度范围:</span> 
+                            <span class="threshold-value">${device.minHumidity}% - ${device.maxHumidity}%</span>
+                        </div>
+                        <div class="threshold-item">
+                            <span>风速范围:</span> 
+                            <span class="threshold-value">${device.minWindSpeed}m/s - ${device.maxWindSpeed}m/s</span>
+                        </div>
+                        <div class="threshold-item">
+                            <span>公开状态:</span> 
+                            <span class="threshold-value">${device.isPublic ? '公开' : '私有'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 显示天气数据
+        function displayWeatherData(weatherData) {
+            const weatherContainer = document.getElementById('weatherData');
+            
+            if (!weatherData || weatherData.length === 0) {
+                weatherContainer.innerHTML = '<div class="error-message">未找到天气预报数据</div>';
+                return;
+            }
+            
+            let tableHTML = `
+                <table class="weather-table">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>最低温度</th>
+                            <th>最高温度</th>
+                            <th>湿度</th>
+                            <th>风速</th>
+                            <th>风向</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            weatherData.forEach(day => {
+                // 检查是否超出设备阈值
+                const tempMinAlert = day.temperatureMin < currentDevice.minTemperature ? 'alert-low' : 
+                                   day.temperatureMin > currentDevice.maxTemperature ? 'alert-high' : 'alert-normal';
+                
+                const tempMaxAlert = day.temperatureMax < currentDevice.minTemperature ? 'alert-low' : 
+                                   day.temperatureMax > currentDevice.maxTemperature ? 'alert-high' : 'alert-normal';
+                
+                const humidityAlert = day.humidity < currentDevice.minHumidity ? 'alert-low' : 
+                                    day.humidity > currentDevice.maxHumidity ? 'alert-high' : 'alert-normal';
+                
+                const windSpeedAlert = day.windSpeed < currentDevice.minWindSpeed ? 'alert-low' : 
+                                     day.windSpeed > currentDevice.maxWindSpeed ? 'alert-high' : 'alert-normal';
+                
+                tableHTML += `
+                    <tr>
+                        <td>${formatDate(day.date)}</td>
+                        <td class="${tempMinAlert}">${day.temperatureMin}°C</td>
+                        <td class="${tempMaxAlert}">${day.temperatureMax}°C</td>
+                        <td class="${humidityAlert}">${day.humidity}%</td>
+                        <td class="${windSpeedAlert}">${day.windSpeed}m/s</td>
+                        <td>${getWindDirection(day.windDirection)}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += '</tbody></table>';
+            weatherContainer.innerHTML = tableHTML;
+        }
+
+        // 生成预警报告
+        function generateAlertReport() {
+            if (!currentWeatherData || !currentDevice) {
+                return;
+            }
+            
+            const reportContainer = document.getElementById('reportContent');
+            let alertCount = 0;
+            let highTempAlerts = 0;
+            let lowTempAlerts = 0;
+            let highHumidityAlerts = 0;
+            let lowHumidityAlerts = 0;
+            let highWindAlerts = 0;
+            let lowWindAlerts = 0;
+            
+            // 分析每一天的数据
+            currentWeatherData.forEach(day => {
+                // 温度检查
+                if (day.temperatureMin < currentDevice.minTemperature) {
+                    lowTempAlerts++;
+                    alertCount++;
+                }
+                if (day.temperatureMax > currentDevice.maxTemperature) {
+                    highTempAlerts++;
+                    alertCount++;
+                }
+                
+                // 湿度检查
+                if (day.humidity < currentDevice.minHumidity) {
+                    lowHumidityAlerts++;
+                    alertCount++;
+                }
+                if (day.humidity > currentDevice.maxHumidity) {
+                    highHumidityAlerts++;
+                    alertCount++;
+                }
+                
+                // 风速检查
+                if (day.windSpeed < currentDevice.minWindSpeed) {
+                    lowWindAlerts++;
+                    alertCount++;
+                }
+                if (day.windSpeed > currentDevice.maxWindSpeed) {
+                    highWindAlerts++;
+                    alertCount++;
+                }
+            });
+            
+            // 生成报告
+            let reportHTML = `
+                <div class="report-summary">
+                    <div class="summary-title">分析摘要</div>
+                    <div class="summary-item">
+                        <span class="summary-label">分析日期:</span>
+                        <span class="summary-value">${new Date().toLocaleDateString()}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">分析设备:</span>
+                        <span class="summary-value">${currentDevice.name}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">分析天数:</span>
+                        <span class="summary-value">${currentWeatherData.length}天</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">总预警数:</span>
+                        <span class="summary-value" style="color: ${alertCount > 0 ? '#ff6b6b' : '#4ecdc4'}">${alertCount}个</span>
+                    </div>
+                </div>
+                
+                <h3 style="color: #00c8ff; margin-bottom: 15px;">详细预警分析</h3>
+            `;
+            
+            if (alertCount === 0) {
+                reportHTML += `
+                    <div style="text-align: center; padding: 20px; color: #4ecdc4; font-size: 1.1em;">
+                        <i class="fas fa-check-circle" style="font-size: 2em; margin-bottom: 10px;"></i>
+                        <p>未来七天天气数据均在设备安全阈值范围内，无需预警。</p>
+                    </div>
+                `;
+            } else {
+                reportHTML += `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        ${highTempAlerts > 0 ? `
+                            <div style="background: rgba(255, 107, 107, 0.1); padding: 10px; border-radius: 5px; border-left: 4px solid #ff6b6b;">
+                                <div style="color: #ff6b6b; font-weight: bold;">高温预警</div>
+                                <div style="font-size: 1.2em;">${highTempAlerts}次</div>
+                            </div>
+                        ` : ''}
+                        
+                        ${lowTempAlerts > 0 ? `
+                            <div style="background: rgba(78, 205, 196, 0.1); padding: 10px; border-radius: 5px; border-left: 4px solid #4ecdc4;">
+                                <div style="color: #4ecdc4; font-weight: bold;">低温预警</div>
+                                <div style="font-size: 1.2em;">${lowTempAlerts}次</div>
+                            </div>
+                        ` : ''}
+                        
+                        ${highHumidityAlerts > 0 ? `
+                            <div style="background: rgba(255, 107, 107, 0.1); padding: 10px; border-radius: 5px; border-left: 4px solid #ff6b6b;">
+                                <div style="color: #ff6b6b; font-weight: bold;">高湿预警</div>
+                                <div style="font-size: 1.2em;">${highHumidityAlerts}次</div>
+                            </div>
+                        ` : ''}
+                        
+                        ${lowHumidityAlerts > 0 ? `
+                            <div style="background: rgba(78, 205, 196, 0.1); padding: 10px; border-radius: 5px; border-left: 4px solid #4ecdc4;">
+                                <div style="color: #4ecdc4; font-weight: bold;">低湿预警</div>
+                                <div style="font-size: 1.2em;">${lowHumidityAlerts}次</div>
+                            </div>
+                        ` : ''}
+                        
+                        ${highWindAlerts > 0 ? `
+                            <div style="background: rgba(255, 107, 107, 0.1); padding: 10px; border-radius: 5px; border-left: 4px solid #ff6b6b;">
+                                <div style="color: #ff6b6b; font-weight: bold;">强风预警</div>
+                                <div style="font-size: 1.2em;">${highWindAlerts}次</div>
+                            </div>
+                        ` : ''}
+                        
+                        ${lowWindAlerts > 0 ? `
+                            <div style="background: rgba(78, 205, 196, 0.1); padding: 10px; border-radius: 5px; border-left: 4px solid #4ecdc4;">
+                                <div style="color: #4ecdc4; font-weight: bold;">弱风预警</div>
+                                <div style="font-size: 1.2em;">${lowWindAlerts}次</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <h4 style="color: #00c8ff; margin-bottom: 10px;">建议措施</h4>
+                    <ul style="color: #a0d0ff; padding-left: 20px;">
+                        <li>${highTempAlerts > 0 ? '高温预警：建议增加通风或采取降温措施' : ''}</li>
+                        <li>${lowTempAlerts > 0 ? '低温预警：建议采取保温措施' : ''}</li>
+                        <li>${highHumidityAlerts > 0 ? '高湿预警：建议增加通风或使用除湿设备' : ''}</li>
+                        <li>${lowHumidityAlerts > 0 ? '低湿预警：建议增加湿度或减少通风' : ''}</li>
+                        <li>${highWindAlerts > 0 ? '强风预警：建议加固设备或采取防风措施' : ''}</li>
+                        <li>${lowWindAlerts > 0 ? '弱风预警：建议检查通风系统' : ''}</li>
+                    </ul>
+                `;
+            }
+            
+            reportContainer.innerHTML = reportHTML;
+        }
+
+        // 辅助函数：格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit',
+                weekday: 'short'
+            });
+        }
+
+        // 辅助函数：获取风向文字
+        function getWindDirection(degrees) {
+            if (degrees >= 337.5 || degrees < 22.5) return '北风';
+            if (degrees >= 22.5 && degrees < 67.5) return '东北风';
+            if (degrees >= 67.5 && degrees < 112.5) return '东风';
+            if (degrees >= 112.5 && degrees < 157.5) return '东南风';
+            if (degrees >= 157.5 && degrees < 202.5) return '南风';
+            if (degrees >= 202.5 && degrees < 247.5) return '西南风';
+            if (degrees >= 247.5 && degrees < 292.5) return '西风';
+            if (degrees >= 292.5 && degrees < 337.5) return '西北风';
+            return '未知风向';
+        }
+    </script>
+</body>
+</html>

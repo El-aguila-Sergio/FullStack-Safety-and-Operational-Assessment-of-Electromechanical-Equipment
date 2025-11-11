@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>处理方案上传界面</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 页面通用样式 */
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('/static/images/R-C.png');
+            background-size: cover;
+            background-attachment: scroll; /* 让背景图像随页面滚动 */
+            margin: 0;
+            height: 100vh;
+            position: relative; /* 确保伪元素相对于 body 定位 */
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.82); /* 白色背景，不透明度为 0.5 */
+            z-index: -1; /* 将伪元素置于背景图片之上，内容之下 */
+        }
+
+
+        /* 容器样式 */
+        .container {
+            width: 85%;
+            margin: auto;
+        }
+
+        /* 状态卡片样式 */
+        .status-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .status-container > div {
+            width: 32%;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 6px 12px rgba(0,0,0, 0.2);
+            cursor: pointer;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .status-container > div:hover {
+            background-color: rgba(10, 10, 10, 0.4);
+        }
+
+        .status-container > div:active {
+            background-color: rgba(0, 0, 0, 0.6);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 背景状态颜色样式 */
+        .alarm-status {
+            background-color: rgba(255,0,0,0.2);
+            color: black;
+        }
+
+        .warning-status {
+            background-color: rgba(255,255,0,0.2);
+            color: black;
+        }
+
+        .device-warning-status {
+            background-color: rgba(0,128,0,0.2);
+            color: black;
+        }
+
+        .nature-disaster-status {
+            background-color: rgba(255, 165, 0, 0.2); /* 橙色背景 */
+            color: black;
+        }
+
+        /* 头部样式 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: white;
+            color: black;
+            width: 100vw;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .header-title {
+            font-size: 2em;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .header-date {
+            font-size: 0.8em;
+            margin: 0;
+            position: relative;
+            left: -80px;
+        }
+
+        /* 处理方案区域 */
+        .solution-container {
+            display: none;  /* 默认隐藏 */
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+             position: relative; /* 设定容器为相对定位 */
+        }
+
+        .solution-container h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+       /* 邮箱样式的列表 */
+        .solution-list-container ul {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            max-height: 420px;
+            overflow-y: auto;
+        }
+
+        .solution-list-container ul li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #ddd;
+            background-color:rgba(255,250,240,0.2)
+        }
+
+        .solution-list-container ul li:hover {
+            background-color: rgba(222,184,135,0.2);    /鼠标移动上去的颜色/
+
+        }
+
+        .solution-list-container ul li:last-child {
+            border-bottom: none;
+        }
+
+
+        /* 弹窗样式 */
+        .solution-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* 使用 CSS transform 来居中 */
+            background-color: #f2f2f2;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            width: 80%;
+            max-width: 700px;
+            max-height: 600px;
+            overflow: hidden;  /* 避免整个弹窗滚动 */
+            border-radius: 8px; /* 可选：圆角效果 */
+            display: flex;
+            flex-direction: column;
+            height: auto; /* 自动高度 */
+        }
+
+        /* 弹窗标题部分 */
+        .solution-popup h4 {
+            margin-top: 0;
+            font-size: 18px;
+            padding: 5px ; /* 标题的上下内边距 */
+            background-color: #f2f2f2; /* 保持标题部分不受影响 */
+            font-weight: bold;
+            position: sticky;
+            top: 0; /* 保持在顶部 */
+            z-index: 1; /* 确保标题在最上层 */
+            border-radius: 5px;
+        }
+
+        /* 设置文本部分背景和滚动 */
+        .solution-popup p {
+            background-color: #fff; /* 浅灰色 */
+            padding: 15px; /* 内边距 */
+            border-radius: 5px; /* 圆角效果 */
+            margin: 0px 0; /* 上下间距 */
+            flex-grow: 1; /* 让文本区域撑满剩余空间 */
+            overflow-y: auto; /* 使文本部分可滚动 */
+            max-height: 400px; /* 设置最大高度，以便出现滚动条 */
+        }
+
+        /* 关闭按钮样式 */
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1100; /* 确保标题在最上层 */
+        }
+
+        .close-btn:hover {
+            color: red;
+        }
+
+        /* 上传者信息样式 */
+        .uploader-info {
+            color: #666; /* 灰色字体 */
+            font-size: 0.7em; /* 字体稍小 */
+            text-align: right; /* 文字右对齐 */
+            margin-top: auto; /* 将上传者信息推到弹窗底部 */
+            padding-top: 10px; /* 与内容的间距 */
+        }
+
+
+        /* 表单样式 */
+        .solution-form textarea {
+            width: 98%;
+            height: 100px;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        /* 表单按钮容器样式 */
+        .form-buttons {
+            display: flex;
+            gap: 10px; /* 按钮之间的间距 */
+            margin-top: 10px; /* 与上方内容的间距 */
+        }
+
+        /* 提交按钮和生成智能应对方案按钮的共同样式 */
+        .form-buttons .form-button {
+            color: black;
+            background: rgba(0,123,255,0.5);
+            border: solid #0099CC;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 10px 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.5s ease, transform 0.4s ease;
+        }
+
+        .form-buttons .form-button:hover {
+            color: white;
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+         /* 搜索框样式 */
+        .search-container {
+            position: absolute; /* 使用绝对定位 */
+            top: 35px; /* 上边距 */
+            right: 25px; /* 右边距 */
+            background-color: #f9f9f9; /* 背景色 */
+            padding: 5px; /* 内边距 */
+            border-radius: 5px; /* 圆角 */
+            /box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 阴影 */
+        }
+
+        .search-container input {
+            padding: 5px 10px; /* 输入框内边距 */
+            border: 1px solid #ccc; /* 边框 */
+            border-radius: 4px; /* 圆角 */
+            width: 240px; /* 设置搜索框宽度 */
+            font-size: 14px; /* 字体大小 */
+        }
+
+        .search-container input:focus {
+            outline: none; /* 去掉聚焦时的轮廓 */
+            border-color: #4CAF50; /* 聚焦时边框颜色 */
+        }
+
+
+
+    </style>
+</head>
+<body>
+
+<div id="nav-placeholder"></div>
+
+<div class="header">
+    <h1 class="header-title">上传处理方案</h1>
+    <span class="header-date" id="current-date-time"></span>
+</div>
+
+<div class="container">
+    <div class="status-container">
+        <!-- 设备报警状态显示 -->
+        <div class="alarm-status" onclick="showSolutionForm('alarm')">
+            <h3>设备报警状态</h3>
+            <div class="status-indicator" id="alarm-indicator"></div>
+            <p id="alarm-text">正在加载...</p>
+        </div>
+
+        <!-- 气象预警状态显示 -->
+        <div class="warning-status" onclick="showSolutionForm('warning')">
+            <h3>气象预警状态</h3>
+            <div class="status-indicator" id="warning-indicator"></div>
+            <p id="warning-text">正在加载...</p>
+        </div>
+
+        <!-- 设备工作环境预警状态显示 -->
+        <div class="device-warning-status" onclick="showSolutionForm('device')">
+            <h3>设备工作环境预警状态</h3>
+            <div class="status-indicator" id="device-warning-indicator"></div>
+            <p id="device-warning-text">正在加载...</p>
+        </div>
+
+        <div class="nature-disaster-status" onclick="showSolutionForm('nature')">
+            <h3>自然灾害预警状态</h3>
+            <div class="status-indicator" id="nature-disaster-indicator"></div>
+            <p id="nature-disaster-text">正在加载...</p>
+        </div>
+    </div>
+
+
+    <!-- 处理方案上传表单区域 -->
+    <div class="solution-container" id="solution-container">
+        <!-- 搜索框 -->
+        <div class="search-container">
+            <span class="search-icon"><i class="fas fa-search"></i></span><!-- 放大镜符号 -->
+            <input type="text" id="search-input" placeholder="搜索处理方案..." onkeyup="filterSolutions()">
+        </div>
+         <!-- 显示上传的处理方案 -->
+        <div class="solution-list-container" id="solution-list-container" style="display: none;">
+            <h3>已上传的处理方案：</h3>
+            <ul id="solution-list" style="list-style: none; padding: 0;"></ul>
+        </div>
+
+
+        <h2>上传处理方案</h2>
+        <form class="solution-form" id="solution-form">
+            <label for="solution-text">手动输入处理方案:</label><br>
+            <textarea id="solution-text" name="solution-text" rows="4" cols="50"></textarea><br><br>
+            <div class="form-buttons">
+                <input type="submit" value="提交" class="form-button">
+                <button type="button" id="generate-ai-solution" class="form-button">✨生成智能应对方案</button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+        // 从 Flask 模板引擎获取 username、identity 和 avatar_url
+        const username = "{{ username }}";
+        const identity = "{{ identity }}";
+        const avatarUrl = "{{ avatar_url }}"; // 头像 URL
+</script>
+    <script src="/static/navbar.js"></script>
+<script>
+
+    // 获取当前日期和时间并格式化
+    function updateDateTime() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+        const weekDay = weekDays[now.getDay()];
+        const formattedDate = `${year}-${month}-${day} ${weekDay} ${hours}:${minutes}:${seconds}`;
+        document.getElementById('current-date-time').textContent = formattedDate;
+    }
+
+
+
+    // 初始化时立即更新一次
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+
+
+      // 更新设备报警状态
+    function updateAlarmStatus(data) {
+        const alarmStatus = data.alarmStatus;  // 获取报警状态
+        $('#alarm-text').text(alarmStatus.text);  // 更新报警文本
+        const alarmIndicator = $('#alarm-indicator');
+        const alarmCard = $('.alarm-status');  // 获取报警卡片
+
+        if (alarmStatus.status === 'normal') {
+            alarmIndicator.css('background-color', 'green');  // 正常时，指示器为绿色
+            alarmCard.css('background-color', 'rgba(0,128,0,0.2)');  // 绿色背景
+        } else if (alarmStatus.status === 'warning') {
+            alarmIndicator.css('background-color', 'yellow');  // 警告时，指示器为黄色
+            alarmCard.css('background-color', 'rgba(255,255,0,0.2)');  // 黄色背景
+        } else if (alarmStatus.status === 'critical') {
+            alarmIndicator.css('background-color', 'red');  // 严重时，指示器为红色
+            alarmCard.css('background-color', 'rgba(255,0,0,0.2)');  // 红色背景
+        }
+    }
+    // 更新气象预警状态
+    function updateWeatherWarningStatus(data) {
+        const warningStatus = data.warningStatus;  // 获取气象预警状态
+        $('#warning-text').text(warningStatus.text);  // 更新气象预警文本
+
+        const warningIndicator = $('#warning-indicator');
+        const warningCard = $('.warning-status');  // 获取气象预警卡片
+
+        if (warningStatus.status === 'normal') {
+            warningIndicator.css('background-color', 'green');  // 正常时，指示器为绿色
+            warningCard.css('background-color', 'rgba(0,128,0,0.2)');  // 绿色背景
+        } else if (warningStatus.status === 'warning') {
+            warningIndicator.css('background-color', 'yellow');  // 警告时，指示器为黄色
+            warningCard.css('background-color', 'rgba(255,255,0,0.2)');  // 黄色背景
+        } else if (warningStatus.status === 'critical') {
+            warningIndicator.css('background-color', 'red');  // 严重时，指示器为红色
+            warningCard.css('background-color', 'rgba(255,0,0,0.2)');  // 红色背景
+        }
+    }
+
+    // 更新设备工作环境预警状态
+    function updateDeviceWarningStatus(data) {
+        const deviceWarningStatus = data.deviceWarningStatus;  // 获取设备工作环境预警状态
+        $('#device-warning-text').text(deviceWarningStatus.text);  // 更新设备环境预警文本
+
+        const deviceWarningIndicator = $('#device-warning-indicator');
+        const deviceWarningCard = $('.device-warning-status');  // 获取设备工作环境预警卡片
+
+        if (deviceWarningStatus.status === 'normal') {
+            deviceWarningIndicator.css('background-color', 'green');  // 正常时，指示器为绿色
+            deviceWarningCard.css('background-color', 'rgba(0,128,0,0.2)');  // 绿色背景
+        } else if (deviceWarningStatus.status === 'warning') {
+            deviceWarningIndicator.css('background-color', 'yellow');  // 警告时，指示器为黄色
+            deviceWarningCard.css('background-color', 'rgba(255,255,0,0.2)');  // 黄色背景
+        } else if (deviceWarningStatus.status === 'critical') {
+            deviceWarningIndicator.css('background-color', 'red');  // 严重时，指示器为红色
+            deviceWarningCard.css('background-color', 'rgba(255,0,0,0.2)');  // 红色背景
+        }
+    }
+     // 获取自然灾害预警信息并更新卡片
+    function fetchWeatherWarnings() {
+        fetch('/get-weather-warnings')
+            .then(response => response.json())
+            .then(data => {
+                const disasterText = document.getElementById('nature-disaster-text');
+                const disasterCard = document.querySelector('.nature-disaster-status');
+
+                if (data.length > 0) {
+                    if (data[0].message === "No active warnings.") {
+                        // 没有预警时显示提示信息
+                        disasterText.innerHTML = "当前没有自然灾害预警。";
+                        disasterCard.style.backgroundColor = 'rgba(0,128,0,0.2)'; // 绿色背景
+                    } else if (data[0].error) {
+                        // 如果返回错误信息
+                        disasterText.innerHTML = "获取自然灾害预警信息失败。";
+                        disasterCard.style.backgroundColor = 'rgba(255, 165, 0, 0.2)'; // 橙色背景
+                    } else {
+                        // 有预警时显示详细信息
+                        let warningMessage = "";
+                        data.forEach(warning => {
+                            // 过滤掉 undefined 和 N/A 的字段
+                            const fields = [
+                                { label: "类型", value: warning.typeName },
+                                { label: "级别", value: warning.level },
+                                { label: "描述", value: warning.text },
+                                { label: "开始时间", value: warning.startTime },
+                                { label: "结束时间", value: warning.endTime }
+                            ];
+
+                            warningMessage += `<strong>${warning.title}</strong><br>`;
+                            fields.forEach(field => {
+                                if (field.value && field.value !== "N/A" && field.value !== "undefined") {
+                                    warningMessage += `${field.label}: ${field.value}<br>`;
+                                }
+                            });
+                            warningMessage += `<hr>`;
+                        });
+                        disasterText.innerHTML = "当前有自然灾害预警！";
+                        disasterCard.style.backgroundColor = 'rgba(255, 165, 0, 0.2)'; // 红色背景
+                    }
+                } else {
+                    disasterText.innerHTML = "当前没有自然灾害预警。";
+                    disasterCard.style.backgroundColor = 'rgba(0,128,0,0.2)'; // 绿色背景
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching weather warnings:", error);
+                document.getElementById('nature-disaster-text').innerHTML = "获取自然灾害预警信息失败。";
+                document.querySelector('.nature-disaster-status').style.backgroundColor = 'rgba(255,0,0,0.2)'; // 红色背景
+            });
+    }
+
+     // 页面加载时获取预警数据
+    $(document).ready(function() {
+        // 获取最新的气象数据和报警状态
+        $.get('/latest_weather', function(data) {
+            // 更新报警和预警状态
+            updateAlarmStatus(data);
+            updateDeviceWarningStatus(data);
+            updateWeatherWarningStatus(data);
+        });
+
+        // 获取天气预报数据和预警状态
+        $.get('/forecast', function(data) {
+            // 更新气象预警状态
+            updateWeatherWarningStatus(data);
+        });
+         // 获取自然灾害预警信息
+        fetchWeatherWarnings();
+
+        // 每2小时更新一次数据
+        setInterval(function() {
+            $.get('/latest_weather', function(data) {
+                updateAlarmStatus(data);
+                updateDeviceWarningStatus(data);
+                updateWeatherWarningStatus(data);
+            });
+
+            $.get('/forecast', function(data) {
+                updateWeatherWarningStatus(data);
+            });
+        }, 7200000);  // 每2小时更新一次
+    });
+
+    // 获取后端传递的身份信息（此处通过模板插入身份信息）
+    const userRole = "{{ identity }}";  // 'maintainer' 或 'admin'
+
+        // 根据身份显示或隐藏表单
+        document.addEventListener('DOMContentLoaded', function() {
+            const solutionForm = document.getElementById('solution-form');
+            if (userRole === 'maintainer') {
+                solutionForm.style.display = 'none';  // 隐藏上传表单
+            } else {
+                solutionForm.style.display = 'block';  // 显示上传表单
+            }
+        });
+
+
+    // 显示处理方案表单和已上传的处理方案
+    function showSolutionForm(type) {
+        const solutionContainer = document.getElementById('solution-container');
+        const solutionForm = document.getElementById('solution-form');
+        const solutionListContainer = document.getElementById('solution-list-container');
+        solutionContainer.style.display = 'block';
+        solutionForm.reset();
+
+    // 显示或隐藏生成按钮
+    function toggleGenerateButton(visible) {
+        const generateButton = document.getElementById('generate-ai-solution');
+        generateButton.style.display = visible ? 'block' : 'none';
+    }
+
+    // 生成智能应对方案
+    document.getElementById('generate-ai-solution').addEventListener('click', function() {
+        const solutionType = document.querySelector('#solution-container h2').textContent.split(' ')[0].toLowerCase(); // 获取当前的处理方案类型
+
+        if (solutionType === '自然灾害预警') {
+            // 自然灾害预警：保持原有逻辑
+            fetch('/get-weather-warnings')
+                .then(response => response.json())
+                .then(warnings => {
+                    if (warnings.length > 0) {
+                        // 将预警信息传递给后端生成方案
+                        return fetch('/generate-solution', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                warning_info: JSON.stringify(warnings),  // 将完整的预警信息传递给后端
+                                type: 'nature',  // 传递类型参数
+                            }),
+                        });
+                    } else {
+                        throw new Error('没有可用的自然灾害预警信息。');
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.solution) {
+                        document.getElementById('solution-text').value = data.solution;  // 将生成的方案填充到输入框
+                    } else {
+                        alert('生成方案失败，请重试。');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error generating AI solution:', error);
+                    alert('生成方案时发生错误：' + error.message);
+                });
+        } else if (solutionType === '气象预警状态') {
+            // 气象预警：调用新的逻辑
+            fetch('/generate-solution', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    type: 'warning',  // 传递类型参数
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.solution) {
+                    document.getElementById('solution-text').value = data.solution;  // 将生成的方案填充到输入框
+                } else {
+                    alert('生成方案失败，请重试。');
+                }
+            })
+            .catch(error => {
+                console.error('Error generating AI solution:', error);
+                alert('生成方案时发生错误：' + error.message);
+            });
+        }
+    });
+
+
+
+
+        // 根据不同类型更新提示文本并获取已上传方案
+        switch (type) {
+            case 'alarm':
+                document.querySelector('#solution-container h2').textContent = '设备报警状态 - 上传处理方案';
+                loadSolutionList('设备报警状态');  // 获取已上传的报警处理方案
+                toggleGenerateButton(false);  // 隐藏生成按钮
+                break;
+            case 'warning':
+                document.querySelector('#solution-container h2').textContent = '气象预警状态 - 上传处理方案';
+                loadSolutionList('气象预警状态');  // 获取已上传的气象预警处理方案
+                toggleGenerateButton(true);  // 隐藏生成按钮
+                break;
+            case 'device':
+                document.querySelector('#solution-container h2').textContent = '设备工作环境预警 - 上传处理方案';
+                loadSolutionList('设备工作环境预警');  // 获取已上传的设备工作环境预警处理方案
+                toggleGenerateButton(false);  // 隐藏生成按钮
+                break;
+            case 'nature':
+                document.querySelector('#solution-container h2').textContent = '自然灾害预警 - 上传处理方案';
+                loadSolutionList('自然灾害预警');  // 获取已上传的自然灾害预警处理方案
+                toggleGenerateButton(true);  // 生成按钮
+                break;
+            default:
+                document.querySelector('#solution-container h2').textContent = '上传处理方案';
+                toggleGenerateButton(false);  // 隐藏生成按钮
+        }
+    }
+
+
+    document.getElementById('solution-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const solutionText = document.getElementById('solution-text').value;
+        const timestamp = new Date().toISOString(); // 使用 ISO 格式时间戳
+
+        if (!solutionText.trim()) {
+            alert('请输入处理方案');
+            return;
+        }
+
+        const solutionType = document.querySelector('#solution-container h2').textContent.split(' ')[0].toLowerCase(); // 获取当前的处理方案类型
+
+        // 创建 FormData 对象
+        const formData = new FormData();
+        formData.append('solution-text', solutionText);
+        formData.append('timestamp', timestamp);
+
+        fetch(`/upload_solution/${encodeURIComponent(solutionType)}`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 清空表单并重新加载处理方案列表
+                document.getElementById('solution-form').reset();
+                loadSolutionList(solutionType);
+            } else {
+                alert('保存失败，请重试');
+            }
+        })
+        .catch(error => console.error('Error saving solution:', error));
+    });
+
+    let solutionsData = [];
+    // 加载已上传的处理方案
+    function loadSolutionList(solutionType) {
+        fetch(`/solutions/${solutionType}_solutions.json`)
+            .then(response => response.json())
+            .then(data => {
+                solutionsData = data.solutions; // 将方案数据赋值给 solutionsData
+                const solutionListContainer = document.getElementById('solution-list');
+                solutionListContainer.innerHTML = ''; // 清空当前列表
+
+                data.solutions.forEach(solution => {
+                    const li = document.createElement('li');
+                   li.innerHTML = `
+                        方案编号：${solution.timestamp}
+                        <span style=" color: #666; font-size: 0.8em;">[上传者：${solution.uploader}]</span>
+                    `;
+                    li.onclick = () => showSolutionPopup(solution.content,`方案编号：${solution.timestamp}`, solution.uploader);
+
+                     // 添加删除按钮
+                    if (userRole === 'admin') { // 只有管理员可以显示删除按钮
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = '删除';
+                        deleteButton.style.background = 'none'; // 去掉背景
+                        deleteButton.style.border = 'none'; // 去掉边框
+                        deleteButton.style.color = 'darkblue'; // 深蓝色
+                        deleteButton.style.textDecoration = 'underline'; // 添加下划线
+                        deleteButton.style.cursor = 'pointer'; // 鼠标悬停时显示手型
+                        deleteButton.style.marginleft = '100px'; // 左边距
+                        deleteButton.onclick = (e) => {
+                            e.stopPropagation(); // 阻止事件冒泡，避免触发 li 的点击事件
+                            deleteSolution(solutionType, solution.timestamp);
+                        };
+
+                        li.appendChild(deleteButton);
+                    }
+
+                    solutionListContainer.appendChild(li);
+                });
+
+                document.getElementById('solution-list-container').style.display = 'block'; // 显示方案列表
+            })
+            .catch(error => console.error('Error fetching solutions:', error));
+    }
+
+    // 显示处理方案的弹窗
+    function showSolutionPopup(solutionContent,solutionTitle, uploader) {
+        const popup = document.createElement('div');
+        popup.className = 'solution-popup';
+
+        popup.innerHTML = `
+            <h4>${solutionTitle}</h4>
+            <p style="white-space: pre-wrap;">${solutionContent}</p> <!-- 使用 pre-wrap 保留换行符和缩进 -->
+            <div class="uploader-info">上传者：${uploader}</div> <!-- 上传者信息 -->
+            <button class="close-btn" onclick="closePopup()">×</button> <!-- 叉按钮 -->
+        `;
+
+        document.body.appendChild(popup);
+    }
+
+    // 关闭弹窗
+    function closePopup() {
+        document.querySelector('.solution-popup').remove();
+    }
+
+
+    // 搜索框过滤方案
+    function filterSolutions() {
+        const searchQuery = document.getElementById('search-input').value.toLowerCase(); // 获取输入的搜索内容并转为小写
+        const filteredSolutions = solutionsData.filter(solution => {
+            return solution.timestamp.toLowerCase().includes(searchQuery); // 只根据方案编号模糊匹配
+        });
+
+        // 渲染过滤后的方案列表
+        const solutionListContainer = document.getElementById('solution-list');
+        solutionListContainer.innerHTML = ''; // 清空当前显示的方案列表
+
+        filteredSolutions.forEach(solution => {
+            const li = document.createElement('li');
+             li.innerHTML = `
+                        方案编号：${solution.timestamp}
+                        <span style=" color: #666; font-size: 0.8em;">[上传者：${solution.uploader}]</span>
+                    `;
+             li.onclick = () => showSolutionPopup(solution.content,`方案编号：${solution.timestamp}`, solution.uploader);
+             // 添加删除按钮（仅管理员可见）
+            if (userRole === 'admin') { // 只有管理员可以显示删除按钮
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '删除';
+                deleteButton.style.background = 'none'; // 去掉背景
+                deleteButton.style.border = 'none'; // 去掉边框
+                deleteButton.style.color = 'darkblue'; // 深蓝色
+                deleteButton.style.textDecoration = 'underline'; // 添加下划线
+                deleteButton.style.cursor = 'pointer'; // 鼠标悬停时显示手型
+                deleteButton.style.marginLeft = '10px'; // 左边距
+                deleteButton.onclick = (e) => {
+                    e.stopPropagation(); // 阻止事件冒泡，避免触发 li 的点击事件
+                    deleteSolution(solutionType, solution.timestamp);
+                };
+                li.appendChild(deleteButton);
+            }
+            solutionListContainer.appendChild(li);
+        });
+    }
+
+    function deleteSolution(solutionType, timestamp) {
+        if (confirm('确定要删除这条处理方案吗？')) {
+            fetch(`/delete_solution/${encodeURIComponent(solutionType)}/${encodeURIComponent(timestamp)}`, {
+                method: 'DELETE',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadSolutionList(solutionType); // 重新加载处理方案列表
+                } else {
+                    alert('删除失败，请重试');
+                }
+            })
+            .catch(error => console.error('Error deleting solution:', error));
+        }
+    }
+
+</script>
+
+</body>
+</html>

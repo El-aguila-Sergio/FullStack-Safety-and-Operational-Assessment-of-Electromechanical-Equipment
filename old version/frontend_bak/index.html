@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录系统</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-image: url('/static/images/background.jpg');
+            background-size: cover;
+            display: flex;
+            justify-content: flex-start; /* 将登录框移动到页面左侧 */
+            align-items: center;
+            height: 100vh;
+            padding-left: 50px; /* 添加左侧间距 */
+        }
+        .login-container {
+            background: rgba(45, 45, 50, 0.18);
+            border-top: 1px solid rgba(255,255,255,0.5);
+            border-left: 1px solid rgba(255,255,255,0.5);
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            border-right: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 70px 40px;
+            width: 400px; /* 统一宽度为 400px */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .login-container h2 {
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .login-container h2 .icon {
+            font-size: 28px;
+            margin-right: 10px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column; /* 使子元素垂直排列 */
+            align-items: center; /* 水平居中子元素 */
+            justify-content: center; /* 如果需要在垂直方向上也居中 */
+            margin-bottom: 20px;
+            text-align: left; /* 保持文本左对齐 */
+        }
+
+        .form-group input, .form-group select {
+            width: 80%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(50, 50, 50, 0.3);
+            border-radius: 4px;
+            box-sizing: border-box; /* 确保padding和border包含在width内 */
+            color: #fff; /* 输入框内的文字颜色 */
+        }
+
+        /* 设置 placeholder 的样式 */
+        .form-group input::placeholder, .form-group select::placeholder {
+            color: rgba(255, 255, 255, 0.6); /* 占位符文本颜色 */
+            font-size: 16px;
+        }
+
+        .form-group select {
+            width: 80%;
+            background-color: rgba(50, 50, 50, 0.35);
+        }
+
+        .btn {
+            width: 70%;
+            padding: 12px;
+            font-size: 18px;
+            background-color: rgba(79, 79, 139, 0.41);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            margin-top: 65px;
+        }
+        .btn:hover {
+            background-color: rgba(79, 79, 139, 0.69);
+        }
+        .error {
+            color: red;
+            font-size: 16px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .register-link {
+            font-size: 14px;
+            color: #f0fff0;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 20px;
+        }
+
+        .form-container {
+            display: block;
+        }
+        .register-container {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <div class="form-container" id="loginForm">
+            <h2>
+            <span class="icon">👤</span> 欢迎使用机电设备监控系统
+            </h2>
+            {% if error_message %}
+            <p class="error">{{ error_message }}</p>
+            {% endif %}
+            <form method="POST" action="/">
+                <div class="form-group">
+                    <input type="text" id="username" name="username" placeholder="用户名" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="password" name="password" placeholder="密码" required>
+                </div>
+                <div class="form-group">
+                    <select id="identity" name="identity" required>
+                        <option value="" disabled selected>选择身份</option>
+                        <option value="visitor">访客</option>
+                        <option value="maintainer">维护人员</option>
+                        <option value="admin">管理层</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">登录</button>
+            </form>
+            <div class="register-link" onclick="toggleForm('register')">注册新账号</div>
+        </div>
+
+        <div class="register-container" id="registerForm">
+            <h3><span class="icon">☸</span> 注册账号</h3>
+            {% if error_message2 %}
+            <p class="error">{{ error_message2 }}</p>
+            {% endif %}
+            <form method="POST" action="/register">
+                <div class="form-group">
+                    <input type="text" id="newUsername" name="newUsername" placeholder="用户名" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="newPassword" name="newPassword" placeholder="密码" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="确认密码" required>
+                </div>
+                <div class="btn-container">
+                    <button type="submit" class="btn">注册</button>
+                </div>
+            </form>
+            <div class="register-link" onclick="toggleForm('login')">已有账号？点击登录</div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var formType = urlParams.get('form') || '{{ form_type }}' || 'login'; // 默认为登录表单
+            toggleForm(formType);
+        };
+        function toggleForm(formType) {
+            if (formType === 'login') {
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('registerForm').style.display = 'none';
+                document.getElementById('loginContainer').style.width = '400px'; /* 修改为 400px */
+            } else {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('registerForm').style.display = 'block';
+                document.getElementById('loginContainer').style.width = '400px'; /* 修改为 400px */
+            }
+        }
+
+    </script>
+</body>
+</html>

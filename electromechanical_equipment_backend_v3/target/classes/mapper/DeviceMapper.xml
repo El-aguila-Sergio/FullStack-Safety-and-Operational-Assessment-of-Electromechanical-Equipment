@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xinJiangHeTian.electromechanicalEquipment.mapper.deviceMapper.DeviceMapper">
+
+    <resultMap id="DeviceResultMap" type="com.xinJiangHeTian.electromechanicalEquipment.entity.Device">
+        <id column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="min_temperature" property="minTemperature" />
+        <result column="max_temperature" property="maxTemperature" />
+        <result column="min_humidity" property="minHumidity" />
+        <result column="max_humidity" property="maxHumidity" />
+        <result column="min_wind_speed" property="minWindSpeed" />
+        <result column="max_wind_speed" property="maxWindSpeed" />
+        <result column="is_public" property="isPublic" />
+        <result column="created_by" property="createdBy" />
+        <result column="created_time" property="createdTime" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+
+    <insert id="insertDevice" parameterType="com.xinJiangHeTian.electromechanicalEquipment.entity.Device"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO device (
+        name, min_temperature, max_temperature, min_humidity, max_humidity,
+        min_wind_speed, max_wind_speed, is_public, created_by, created_time, updated_time
+        ) VALUES (
+        #{name}, #{minTemperature}, #{maxTemperature}, #{minHumidity}, #{maxHumidity},
+        #{minWindSpeed}, #{maxWindSpeed}, #{isPublic}, #{createdBy}, NOW(), NOW()
+        )
+    </insert>
+
+    <select id="selectDeviceById" parameterType="Long" resultMap="DeviceResultMap">
+        SELECT * FROM device WHERE id = #{id}
+    </select>
+
+    <update id="updateDevice" parameterType="com.xinJiangHeTian.electromechanicalEquipment.entity.Device">
+        UPDATE device SET
+        name = #{name},
+        min_temperature = #{minTemperature},
+        max_temperature = #{maxTemperature},
+        min_humidity = #{minHumidity},
+        max_humidity = #{maxHumidity},
+        min_wind_speed = #{minWindSpeed},
+        max_wind_speed = #{maxWindSpeed},
+        is_public = #{isPublic},
+        updated_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteDevice" parameterType="Long">
+        DELETE FROM device WHERE id = #{id}
+    </delete>
+
+    <select id="selectDevicesByUserId" parameterType="Long" resultMap="DeviceResultMap">
+        SELECT d.* FROM device d
+        INNER JOIN device_user du ON d.id = du.device_id
+        WHERE du.user_id = #{userId}
+    </select>
+
+    <select id="selectPublicDevices" resultMap="DeviceResultMap">
+        SELECT * FROM device WHERE is_public = true
+    </select>
+
+    <select id="selectDevicesByCreatedBy" parameterType="Long" resultMap="DeviceResultMap">
+        SELECT * FROM device WHERE created_by = #{createdBy}
+    </select>
+
+    <select id="existsDeviceById" parameterType="Long" resultType="boolean">
+        SELECT COUNT(1) > 0 FROM device WHERE id = #{id}
+    </select>
+
+</mapper>

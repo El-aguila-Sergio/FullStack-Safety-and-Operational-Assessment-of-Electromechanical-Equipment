@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户个人中心 - 机电设备安全评估系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 确保 body 占满整个视口 */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+
+        /* 整体背景 - 与气象监测大屏一致的风格 */
+        body {
+            background: 
+                linear-gradient(rgba(74, 85, 112, 0.8), rgba(66, 80, 122, 0.8)),
+                url('https://vcg00.cfp.cn/creative/vcg/800/new/VCG41N1358149692.jpg');
+            background-size: cover;
+            background-position: center;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 头部样式 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            background: rgba(0, 10, 30, 0.5);
+            color: #e0e0e0;
+            width: 100%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 150, 255, 0.3);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            position: relative;
+            flex-shrink: 0;
+            height: 50px; /* 固定高度 */
+        }
+
+        .header-title {
+            font-size: 1.8em;
+            margin: 0;
+            flex-grow: 1;
+            text-align: center;
+            color: #00c8ff;
+            text-shadow: 0 0 8px rgba(0, 200, 255, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .header-date {
+            font-size: 1em;
+            margin: 0;
+            position: relative;
+            left: -80px;
+            color: #00c8ff;
+            font-weight: bold;
+        }
+
+        /* 下拉菜单样式 */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            z-index: 1001;
+        }
+
+        .dropdown-btn {
+            background: linear-gradient(90deg, rgba(0, 180, 255, 0.7), rgba(60, 100, 180, 0.7));
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 8px rgba(0, 180, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-btn:hover {
+            background: linear-gradient(90deg, rgba(0, 200, 255, 0.8), rgba(80, 120, 200, 0.8));
+            transform: translateY(-2px);
+            box-shadow: 0 0 12px rgba(0, 180, 255, 0.5);
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: rgba(0, 10, 30, 0.9);
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+        }
+
+        .dropdown-content a {
+            color: #e0e0e0;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(0, 150, 255, 0.3);
+            color: #00c8ff;
+            padding-left: 20px;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-icon {
+            font-size: 18px;
+        }
+
+        /* 主容器 - 缩小并居中 */
+        .container {
+            width: 80%;
+            max-width: 700px;
+            margin: 20px auto;
+            margin-bottom:10px;
+            background: rgba(0, 10, 30, 0.7);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.3);
+            border: 1px solid rgba(0, 180, 255, 0.4);
+            /* overflow: hidden; */
+            backdrop-filter: blur(10px);
+            flex-grow: 1;
+        }
+
+        /* 内容区域 */
+        .content {
+            padding: 25px;
+        }
+
+        /* 用户信息卡片 */
+        .user-card {
+            background: rgba(0, 20, 40, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0, 150, 255, 0.2);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00c8ff, #4a69bd);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 35px;
+            color: white;
+            box-shadow: 0 0 20px rgba(0, 200, 255, 0.5);
+        }
+
+        .user-info {
+            text-align: center;
+        }
+
+        .user-name {
+            font-size: 1.6em;
+            margin: 0 0 5px 0;
+            color: #00c8ff;
+        }
+
+        .user-role {
+            display: inline-block;
+            background: rgba(0, 150, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #00c8ff;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+        }
+
+        /* 功能区域 */
+        .functions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .function-card {
+            background: rgba(0, 20, 40, 0.5);
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 150, 255, 0.2);
+        }
+
+        .function-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 200, 255, 0.2);
+            border-color: rgba(0, 200, 255, 0.5);
+        }
+
+        .function-icon {
+            font-size: 2.2em;
+            color: #00c8ff;
+            margin-bottom: 12px;
+        }
+
+        .function-title {
+            font-size: 1.2em;
+            margin: 0 0 8px 0;
+            color: #00c8ff;
+        }
+
+        .function-desc {
+            font-size: 0.85em;
+            color: #a0d0ff;
+            margin: 0;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: rgba(0, 20, 40, 0.9);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 0 30px rgba(0, 200, 255, 0.4);
+            border: 1px solid rgba(0, 150, 255, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 150, 255, 0.3);
+            padding-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 1.4em;
+            color: #00c8ff;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #a0d0ff;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #00c8ff;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+            margin-right: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a0d0ff;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(0, 30, 60, 0.5);
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            border-radius: 5px;
+            color: #e0e0e0;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #00c8ff;
+            box-shadow: 0 0 10px rgba(0, 200, 255, 0.3);
+        }
+
+        .btn {
+            background: linear-gradient(90deg, #00c8ff, #4a69bd);
+            border: none;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 60%;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-top: 30px;
+            /* 居中关键代码 👇 */
+            display: block;
+            margin: 30px auto;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 200, 255, 0.4);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                margin: 15px auto;
+            }
+            
+            .header-title {
+                font-size: 1.8em;
+            }
+            
+            .header-date {
+                left: 0;
+                font-size: 0.9em;
+            }
+            
+            .functions {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+            
+            .dropdown-btn {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <div class="header">
+        <!-- 左侧下拉菜单 -->
+        <div class="dropdown">
+            <button class="dropdown-btn">
+                <i class="dropdown-icon">☰</i> 导航菜单
+            </button>
+            <div class="dropdown-content">
+                <a href="dashboard.html">气象监测大屏</a>
+                <a href="data-analysis.html">数据分析中心</a>
+                <a href="device-management.html">设备管理系统</a>
+                <a href="weather-forecast.html">气象预报</a>
+                <a href="alert-center.html">预警中心</a>
+                <a href="user-center.html">用户个人中心</a>
+            </div>
+        </div>
+        <h1 class="header-title">用户个人中心</h1>
+        <span class="header-date" id="current-date-time"></span>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <div class="content">
+            <!-- 用户信息卡片 -->
+            <div class="user-card">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-info">
+                    <h2 class="user-name" id="username">张工程师</h2>
+                    <span class="user-role" id="userrole">管理员</span>
+                </div>
+            </div>
+            
+            <!-- 功能区域 -->
+            <div class="functions">
+                <div class="function-card" onclick="openModal('passwordModal')">
+                    <div class="function-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <h3 class="function-title">修改密码</h3>
+                    <p class="function-desc">定期更改密码以提高账户安全性</p>
+                </div>
+                
+                <div class="function-card" onclick="openModal('emailModal')">
+                    <div class="function-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h3 class="function-title">修改邮箱</h3>
+                    <p class="function-desc">更新您的联系邮箱地址</p>
+                </div>
+                
+                <div class="function-card" onclick="openModal('roleModal')">
+                    <div class="function-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h3 class="function-title">修改身份权限</h3>
+                    <p class="function-desc">调整您的系统访问权限</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 修改密码模态框 -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">修改密码</h3>
+                <button class="close-btn" onclick="closeModal('passwordModal')">&times;</button>
+            </div>
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="currentPassword">当前密码</label>
+                    <input type="password" id="currentPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">新密码</label>
+                    <input type="password" id="newPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmNewPassword">确认新密码</label>
+                    <input type="password" id="confirmNewPassword" required>
+                </div>
+                <button type="submit" class="btn">确认修改</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 修改邮箱模态框 -->
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">修改邮箱</h3>
+                <button class="close-btn" onclick="closeModal('emailModal')">&times;</button>
+            </div>
+            <form id="emailForm">
+                <div class="form-group">
+                    <label for="currentEmail">当前邮箱</label>
+                    <input type="email" id="currentEmail" value="zhang@example.com" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="newEmail">新邮箱地址</label>
+                    <input type="email" id="newEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="emailPassword">当前密码</label>
+                    <input type="password" id="emailPassword" required>
+                </div>
+                <button type="submit" class="btn">确认修改</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 修改身份权限模态框 -->
+    <div id="roleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">修改身份权限</h3>
+                <button class="close-btn" onclick="closeModal('roleModal')">&times;</button>
+            </div>
+            <form id="roleForm">
+                <div class="form-group">
+                    <label for="currentRole">当前身份</label>
+                    <input type="text" id="currentRole" value="管理员" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="newRole">新身份</label>
+                    <select id="newRole" required>
+                        <option value="">请选择身份</option>
+                        <option value="guest">访客</option>
+                        <option value="user">普通用户</option>
+                        <option value="admin">管理员</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="rolePassword">当前密码</label>
+                    <input type="password" id="rolePassword" required>
+                </div>
+                <button type="submit" class="btn">确认修改</button>
+            </form>
+        </div>
+    </div>
+    <script>
+         // 获取当前日期和时间并格式化
+        function updateDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekDay = weekDays[now.getDay()];
+
+            const formattedDate = `${year}-${month}-${day} ${weekDay} ${hours}:${minutes}:${seconds}`;
+            document.getElementById('current-date-time').textContent = formattedDate;
+        }
+
+        // 初始化时立即更新一次
+        updateDateTime();
+
+        // 每秒更新一次时间
+        setInterval(updateDateTime, 1000);
+
+
+
+
+        
+        // API 基础URL
+        const API_BASE_URL = '/api';
+
+        // 全局变量
+        let currentUserId = null;
+        let currentUserData = null;
+
+        // 检查登录状态并加载用户信息
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (!token || !user) {
+                window.location.href = '/';
+                return;
+            }
+            
+            // 显示用户信息
+            currentUserData = JSON.parse(user);
+            document.getElementById('username').textContent = currentUserData.username || '用户';
+            document.getElementById('userrole').textContent = getRoleText(currentUserData.role);
+            currentUserId = currentUserData.id || 1;
+            
+            // 设置表单中的当前值
+            document.getElementById('currentEmail').value = currentUserData.email || '';
+            document.getElementById('currentRole').value = getRoleText(currentUserData.role);
+        }
+
+        // 获取角色文本显示
+        function getRoleText(role) {
+            const roleMap = {
+                'GUEST': '访客',
+                'USER': '普通用户', 
+                'ADMIN': '管理员',
+            };
+            return roleMap[role] || '用户';
+        }
+
+        // 获取角色值
+        function getRoleValue(roleText) {
+            const roleMap = {
+                '访客': 'GUEST',
+                '普通用户': 'USER',
+                '管理员': 'ADMIN',
+            };
+            return roleMap[roleText] || 'USER';
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            
+            // 绑定表单提交事件
+            bindFormEvents();
+        });
+
+
+        // 绑定表单提交事件
+        function bindFormEvents() {
+            //提取用户id
+            const user = localStorage.getItem('user');
+            currentUserData = JSON.parse(user);
+            currentUserId = currentUserData.id;
+            // 修改密码表单
+            document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+                
+                if (newPassword !== confirmNewPassword) {
+                    alert('新密码与确认密码不一致！');
+                    return;
+                }
+                
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`${API_BASE_URL}/user/password-modify`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: JSON.stringify({
+                            currentUserId,
+                            currentPassword,
+                            newPassword
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('密码修改成功！');
+                        closeModal('passwordModal');
+                        this.reset();
+                    } else {
+                        alert('密码修改失败：' + (result.message || '未知错误'));
+                    }
+                } catch (error) {
+                    console.error('修改密码失败:', error);
+                    alert('修改密码失败，请检查网络连接');
+                }
+            });
+            
+            // 修改邮箱表单
+            document.getElementById('emailForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const newEmail = document.getElementById('newEmail').value;
+                const emailPassword = document.getElementById('emailPassword').value;
+                
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`${API_BASE_URL}/user/email-modify`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: JSON.stringify({
+                            userId: currentUserId,
+                            password: emailPassword,
+                            newEmail: newEmail
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // 更新本地存储的用户数据
+                        currentUserData.email = newEmail;
+                        localStorage.setItem('user', JSON.stringify(currentUserData));
+                        
+                        alert('邮箱修改成功！');
+                        closeModal('emailModal');
+                        this.reset();
+                    } else {
+                        alert('邮箱修改失败：' + (result.message || '未知错误'));
+                    }
+                } catch (error) {
+                    console.error('修改邮箱失败:', error);
+                    alert('修改邮箱失败，请检查网络连接');
+                }
+            });
+            
+            // 修改身份权限表单
+            document.getElementById('roleForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const newRole = document.getElementById('newRole').value;
+                const rolePassword = document.getElementById('rolePassword').value;
+                
+                if (!newRole) {
+                    alert('请选择新的身份权限！');
+                    return;
+                }
+                
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`${API_BASE_URL}/user/role-modify`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: JSON.stringify({
+                            userId: currentUserId,
+                            password: rolePassword,
+                            newRole: getRoleValue(newRole)
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // 更新本地存储的用户数据和页面显示
+                        currentUserData.role = getRoleValue(newRole);
+                        localStorage.setItem('user', JSON.stringify(currentUserData));
+                        
+                        document.getElementById('userrole').textContent = newRole;
+                        document.getElementById('currentRole').value = newRole;
+                        
+                        alert('身份权限修改成功！');
+                        closeModal('roleModal');
+                        this.reset();
+                    } else {
+                        alert('身份权限修改失败：' + (result.message || '未知错误'));
+                    }
+                } catch (error) {
+                    console.error('修改身份权限失败:', error);
+                    alert('修改身份权限失败，请检查网络连接');
+                }
+            });
+        }
+
+        // 模态框控制函数
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

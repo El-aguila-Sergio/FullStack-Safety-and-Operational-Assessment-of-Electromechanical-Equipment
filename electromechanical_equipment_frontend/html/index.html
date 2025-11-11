@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机电设备极端天气安全评估系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden;
+            background: #f5f7fa;
+        }
+
+        /* 左侧欢迎区域 - 机械未来风格 */
+        .welcome-section {
+            flex: 1;
+            background: 
+                linear-gradient(135deg, rgba(12, 36, 97, 0.9), rgba(30, 55, 153, 0.9), rgba(74, 105, 189, 0.9)),
+                url('https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 40px;
+            color: white;
+            text-align: center;
+        }
+
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.2) 0%, transparent 50%);
+            z-index: 1;
+        }
+
+        .welcome-content {
+            position: relative;
+            z-index: 2;
+            max-width: 80%;
+        }
+
+        .welcome-section h1 {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 247, 255, 0.7);
+            letter-spacing: 2px;
+        }
+
+        .welcome-section p {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .feature-list {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 247, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        /* 右侧表单区域 */
+        .form-section {
+            width: 500px;
+            background: 
+                linear-gradient(rgba(226, 226, 226, 0.95), rgba(226, 226, 226, 0.95)),
+                url('https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            overflow-y: auto; /* 添加垂直滚动条 */
+            max-height: 100vh; /* 限制最大高度 */
+        }
+
+        /* 自定义滚动条样式 */
+        .form-section::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .form-section::-webkit-scrollbar-track {
+            background: rgba(240, 242, 245, 0.5);
+            border-radius: 4px;
+        }
+
+        .form-section::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #627f80, #404657);
+            border-radius: 4px;
+        }
+
+        .form-section::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #00d0e0, #3a59ad);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .logo i {
+            font-size: 32px;
+            color: #4a69bd;
+            margin-right: 10px;
+        }
+
+        .logo h2 {
+            color: #0c2461;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            background: #f0f2f5;
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            color: #666;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab.active {
+            background: white;
+            color: #0c2461;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container {
+            position: relative;
+        }
+
+        .form {
+            display: none;
+        }
+
+        .form.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            color: #333;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #4a69bd;
+            box-shadow: 0 0 0 2px rgba(74, 105, 189, 0.2);
+        }
+
+        .form-group input::placeholder {
+            color: #999;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 40px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(90deg, #00f7ff, #4a69bd);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 247, 255, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success {
+            background: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+
+        .error {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .form-footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            padding-bottom: 20px; /* 为滚动条留出空间 */
+        }
+
+        .form-footer a {
+            color: #4a69bd;
+            text-decoration: none;
+        }
+
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 8s infinite linear; /* 加快粒子速度 */
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) translateX(0);
+            }
+            25% {
+                transform: translateY(-20px) translateX(10px);
+            }
+            50% {
+                transform: translateY(-40px) translateX(0);
+            }
+            75% {
+                transform: translateY(-20px) translateX(-10px);
+            }
+            100% {
+                transform: translateY(0) translateX(0);
+            }
+        }
+         /* 弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+            opacity: 0;
+            transform: translateY(-50px);
+            }
+            to {
+            opacity: 1;
+            transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #a2b1c7, #5264ac);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .close:hover {
+            transform: scale(1.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 60vh;
+            overflow-y: auto;
+            
+        }
+
+        .modal-body h4 {
+            color: #1a2a6c;
+            margin-bottom: 15px;
+        }
+
+        .modal-body h5 {
+            color: #501fb2;
+            margin: 20px 0 10px 0;
+        }
+
+        .modal-body p, .modal-body ul {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .modal-body ul {
+            padding-left: 20px;
+        }
+
+        .modal-body li {
+            margin-bottom: 5px;
+        }
+
+        .modal-footer {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-btn {
+            padding: 9px 30px;
+            background: linear-gradient(135deg, #1a2a6c, #523790);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            
+            .welcome-section {
+                display: none;
+            }
+            
+            .form-section {
+                width: 100%;
+                height: 100vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 左侧欢迎区域 -->
+    <div class="welcome-section">
+        <div class="floating-particles" id="particles"></div>
+        <div class="welcome-content">
+            <h1>欢迎来到机电设备安全评估系统</h1>
+            <p>
+                与专业工程师共同保障设备安全，实时监测天气风险，提供精准评估报告。加入我们，开启设备安全管理新篇章！
+            </p>
+            
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-cloud-sun-rain"></i>
+                    </div>
+                    <span>极端天气实时监测</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <span>设备安全智能评估</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <span>数据分析与报告</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧表单区域 -->
+    <div class="form-section">
+        <div class="logo">
+            <i class="fas fa-cogs"></i>
+            <h2>机电设备安全评估系统</h2>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="login">登录</div>
+            <div class="tab" data-tab="register">注册</div>
+        </div>
+
+        <div class="form-container">
+            <!-- 登录表单 -->
+            <form id="loginForm" class="form active">
+                <div class="form-group">
+                    <label for="loginUsername">用户名</label>
+                    <input type="text" id="loginUsername" name="username" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">密码</label>
+                    <input type="password" id="loginPassword" name="password" required />
+                    <span class="password-toggle" id="loginPasswordToggle">
+                        <i class="far fa-eye"></i>
+                    </span>
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginRole">身份</label>
+                    <select id="loginRole" name="role" required>
+                        <option value="">请选择身份</option>
+                        <option value="GUEST">访客</option>
+                        <option value="USER">普通用户</option>
+                        <option value="ADMIN">管理员</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn" id="loginBtn">登录</button>
+
+                <div id="loginMessage" class="message"></div>
+            </form>
+
+            <!-- 注册表单 -->
+            <form id="registerForm" class="form">
+                <div class="form-group">
+                    <label for="registerUsername">用户名 (3-20位)</label>
+                    <input type="text" id="registerUsername" name="username" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="registerEmail">邮箱</label>
+                    <input type="email" id="registerEmail" name="email" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPassword">密码 (6-20位)</label>
+                    <input type="password" id="registerPassword" name="password" required />
+                    <span class="password-toggle" id="registerPasswordToggle">
+                        <i class="far fa-eye"></i>
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">确认密码</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required />
+                    <span class="password-toggle" id="confirmPasswordToggle">
+                        <i class="far fa-eye"></i>
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label for="bio">个人简介 (可选)</label>
+                    <input type="text" id="bio" name="bio" />
+                </div>
+
+                <button type="submit" class="btn" id="registerBtn">注册</button>
+
+                <div id="registerMessage" class="message"></div>
+            </form>
+        </div>
+
+        <div class="form-footer">
+            <p>
+                注册即表示您同意我们的 <a href="#">服务条款</a> 和
+                <a href="#">隐私政策</a>
+            </p>
+        </div>
+    </div>
+    <!-- 服务条款弹窗 -->
+    <div id="termsModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>服务条款</h3>
+          <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <h4>欢迎使用机电设备极端天气安全评估系统！</h4>
+          <p>请仔细阅读以下服务条款：</p>
+          
+          <h5>1. 用户注册</h5>
+          <p>用户注册时需要提供真实、准确、完整的个人信息。用户有责任维护账户安全。</p>
+          
+          <h5>2. 使用规范</h5>
+          <p>用户在使用系统时需遵守以下规定：</p>
+          <ul>
+          <li>不得上传虚假或恶意设备数据</li>
+          <li>不得进行未授权的系统访问或攻击</li>
+          <li>不得利用系统漏洞获取不当利益</li>
+          <li>其他违反法律法规的行为</li>
+          </ul>
+
+          <h5>3. 数据权利</h5>
+          <p>用户上传的设备数据和评估报告版权归用户所有，但授予平台进行分析和服务的权利。</p>
+
+          <h5>4. 隐私保护</h5>
+          <p>我们承诺保护用户隐私和设备数据安全，具体政策请参阅隐私政策。</p>
+
+          <h5>5. 服务变更</h5>
+          <p>平台保留根据技术发展和服务优化需要修改服务条款的权利，重要变更将通过系统通知方式告知用户。</p>
+
+          <p><strong>最后更新日期：2025年11月5日</strong></p>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn agree-btn">同意并继续</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 隐私政策弹窗 -->
+    <div id="privacyModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>隐私政策</h3>
+          <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <h4>隐私保护承诺</h4>
+          <p>我们高度重视用户的隐私保护，特此说明我们的隐私政策：</p>
+          
+          <h5>1. 信息收集</h5>
+          <p>我们收集的信息包括：</p>
+          <ul>
+            <li>注册时提供的用户名、邮箱等基本信息</li>
+            <li>用户上传的设备数据和评估报告</li>
+            <li>系统使用记录和操作日志</li>
+            <li>设备信息和访问数据</li>
+          </ul>
+          
+          <h5>2. 信息使用</h5>
+          <p>收集的信息将用于：</p>
+          <ul>
+            <li>提供和改进设备安全评估服务</li>
+            <li>生成精准的设备安全分析报告</li>
+            <li>与用户沟通重要服务通知</li>
+            <li>确保系统安全和合规运行</li>
+          </ul>
+          
+          <h5>3. 信息共享</h5>
+          <p>我们不会将您的个人信息出售给第三方。仅在以下情况下可能共享信息：</p>
+          <ul>
+            <li>获得用户明确同意</li>
+            <li>法律要求或政府机构要求</li>
+            <li>保护平台和用户权益</li>
+          </ul>
+          
+          <h5>4. 数据安全</h5>
+          <p>我们采取行业标准的安全措施保护用户数据和设备信息，确保评估数据的安全性。</p>
+          
+          <h5>5. 用户权利</h5>
+          <p>用户有权：</p>
+          <ul>
+            <li>访问、修改个人资料</li>
+            <li>删除账户和数据</li>
+            <li>拒绝某些信息收集</li>
+          </ul>
+          
+          <p><strong>如有疑问，请联系：privacy@Electromechanical-Equipment-Safety.com</strong></p>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn agree-btn">已阅读并理解</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        // API基础URL
+        const API_BASE_URL = '/api';
+        
+       // 创建浮动粒子背景
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 20;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // 随机大小和位置 - 增大粒子大小
+                const size = Math.random() * 10 + 5; // 大小范围从5-15px
+                const left = Math.random() * 100;
+                const top = Math.random() * 100;
+                const delay = Math.random() * 10; // 减少延迟时间
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${left}%`;
+                particle.style.top = `${top}%`;
+                particle.style.animationDelay = `${delay}s`;
+                
+                // 加快动画速度
+                particle.style.animationDuration = `${Math.random() * 5 + 5}s`; // 动画时长5-10秒
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+        // 切换登录/注册表单
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // 更新标签状态
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 显示对应的表单
+                const tabName = this.getAttribute('data-tab');
+                document.querySelectorAll('.form').forEach(form => form.classList.remove('active'));
+                document.getElementById(tabName === 'login' ? 'loginForm' : 'registerForm').classList.add('active');
+                
+                clearMessages();
+            });
+        });
+
+        // 密码显示/隐藏切换
+        document.querySelectorAll('.password-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const inputId = this.id.replace('Toggle', '');
+                const input = document.getElementById(inputId);
+                const icon = this.querySelector('i');
+                
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+        });
+
+        // 登录表单提交
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const role = document.getElementById('loginRole').value;
+            const messageEl = document.getElementById('loginMessage');
+            const loginBtn = document.getElementById('loginBtn');
+            
+            // 简单验证
+            if (!username || !password || !role) {
+                showMessage(messageEl, '请填写所有必填字段', 'error');
+                return;
+            }
+            
+            // 显示加载状态
+            setButtonLoading(loginBtn, true);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        role: role
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(messageEl, '登录成功！正在跳转...', 'success');
+                    
+                    // 保存token到localStorage
+                    localStorage.setItem('token', result.data.token);
+                    localStorage.setItem('user', JSON.stringify(result.data.user));
+                    
+                    // 跳转到主页面
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                } else {
+                    showMessage(messageEl, result.message || '登录失败', 'error');
+                }
+            } catch (error) {
+                console.error('登录请求错误:', error);
+                showMessage(messageEl, '网络错误，请检查服务器连接', 'error');
+            } finally {
+                setButtonLoading(loginBtn, false);
+            }
+        });
+
+        // 注册表单提交
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('registerUsername').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const bio = document.getElementById('bio').value;
+            const messageEl = document.getElementById('registerMessage');
+            const registerBtn = document.getElementById('registerBtn');
+            
+            // 简单验证
+            if (!username || !email || !password || !confirmPassword) {
+                showMessage(messageEl, '请填写所有必填字段', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showMessage(messageEl, '两次输入的密码不一致', 'error');
+                return;
+            }
+            
+            if (username.length < 3 || username.length > 20) {
+                showMessage(messageEl, '用户名长度需为3-20位', 'error');
+                return;
+            }
+            
+            if (password.length < 6 || password.length > 20) {
+                showMessage(messageEl, '密码长度需为6-20位', 'error');
+                return;
+            }
+            
+            // 显示加载状态
+            setButtonLoading(registerBtn, true);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        email: email,
+                        password: password,
+                        confirmPassword: confirmPassword,
+                        bio: bio
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(messageEl, '注册成功！', 'success');
+                    
+                    // 自动切换到登录表单
+                    setTimeout(() => {
+                        document.querySelector('.tab[data-tab="login"]').click();
+                        document.getElementById('loginUsername').value = username;
+                        clearMessages();
+                    }, 1500);
+                } else {
+                    showMessage(messageEl, result.message || '注册失败', 'error');
+                }
+            } catch (error) {
+                console.error('注册请求错误:', error);
+                showMessage(messageEl, '网络错误，请检查服务器连接', 'error');
+            } finally {
+                setButtonLoading(registerBtn, false);
+            }
+        });
+
+        // 显示消息
+        function showMessage(element, text, type) {
+            element.textContent = text;
+            element.className = 'message ' + type;
+            element.style.display = 'block';
+            
+            // 5秒后隐藏消息
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 5000);
+        }
+
+        // 清除所有消息
+        function clearMessages() {
+            document.getElementById('loginMessage').style.display = 'none';
+            document.getElementById('registerMessage').style.display = 'none';
+        }
+
+        // 设置按钮加载状态
+        function setButtonLoading(button, isLoading) {
+            if (isLoading) {
+                button.classList.add('loading');
+                button.disabled = true;
+            } else {
+                button.classList.remove('loading');
+                button.disabled = false;
+            }
+        }
+
+        // // 检查是否已登录
+        // function checkLoginStatus() {
+        //     const token = localStorage.getItem('token');
+        //     if (token) {
+        //         // 验证token有效性
+        //         fetch(`${API_BASE_URL}/auth/validate`, {
+        //             method: 'GET',
+        //             headers: {
+        //                 'Authorization': `Bearer ${token}`
+        //             }
+        //         })
+        //         .then(response => response.json())
+        //         .then(result => {
+        //             if (result.success) {
+        //                 // token有效，跳转到主页面
+        //                 window.location.href = 'dashboard.html';
+        //             } else {
+        //                 // token无效，清除本地存储
+        //                 localStorage.removeItem('token');
+        //                 localStorage.removeItem('user');
+        //             }
+        //         })
+        //         .catch(error => {
+        //             console.error('Token验证失败:', error);
+        //             localStorage.removeItem('token');
+        //             localStorage.removeItem('user');
+        //         });
+        //     }
+        // }
+
+        // 弹窗功能
+        const termsLink = document.querySelector('a[href="#"]:first-of-type');
+        const privacyLink = document.querySelector('a[href="#"]:last-of-type');
+        const termsModal = document.getElementById('termsModal');
+        const privacyModal = document.getElementById('privacyModal');
+        const closeButtons = document.querySelectorAll('.close, .agree-btn');
+
+         // 服务条款链接点击事件
+        termsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            termsModal.style.display = 'block';
+        });
+
+        // 隐私政策链接点击事件
+        privacyLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            privacyModal.style.display = 'block';
+        });
+
+        // 关闭弹窗功能
+        closeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+            termsModal.style.display = 'none';
+            privacyModal.style.display = 'none';
+            });
+        });
+
+        // 点击弹窗外部关闭
+        window.addEventListener('click', (e) => {
+            if (e.target === termsModal) {
+            termsModal.style.display = 'none';
+            }
+            if (e.target === privacyModal) {
+            privacyModal.style.display = 'none';
+            }
+        });
+
+        // ESC键关闭弹窗
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+            termsModal.style.display = 'none';
+            privacyModal.style.display = 'none';
+            }
+        });
+
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            checkLoginStatus();
+        });
+    </script>
+</body>
+</html>

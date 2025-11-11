@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机电设备报警监控</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+    /* 设置页面整体布局和背景颜色 */
+    body {
+        font-family: Arial, sans-serif; /* 使用 Arial 字体，若无法加载则使用 sans-serif 字体 */
+
+        margin: 0; /* 去除页面的默认外边距 */
+
+    }
+
+    /* 容器布局，用于限制页面内容宽度和居中显示 */
+    .container {
+        width: 80%; /* 设置容器宽度为页面宽度的 80% */
+        margin: auto; /* 水平居中对齐 */
+    }
+    .status-container {
+        margin: auto;
+        display: flex; /* 使用flex布局 */
+        justify-content: space-between; /* 横向分布子元素，两端对齐 */
+        gap: 40px; /* 子元素之间的间距 */
+    }
+
+    /* 报警状态模块样式 */
+    .alarm-status, .warning-status, .device-warning-status {
+        margin-bottom: 20px; /* 每个状态模块底部增加20px的间距 */
+        background-color: rgba(211, 211, 211, 0.3); /* 设置半透明的浅灰色背景 */
+        border-radius: 10px; /* 设置圆角，数值可以根据需求调整 */
+        padding: 10px; /* 增加内边距以确保内容与边缘之间有足够的空间 */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* 可选：添加阴影效果，让容器看起来像是被“包裹”着 */
+        flex: 1; /* 让每个模块尽可能地扩展 */
+
+    }
+
+    /* 报警和预警状态的图标样式 */
+    .status-indicator {
+        width: 20px; /* 圆形图标的宽度为20px */
+        height: 20px; /* 圆形图标的高度为20px */
+        border-radius: 50%; /* 将图标设置为圆形 */
+        display: inline-block; /* 将图标设为块状元素，支持内联排列 */
+        vertical-align: middle; /* 图标与文本垂直对齐 */
+        margin-right: 10px; /* 图标与文本之间添加10px的间距 */
+    }
+
+    /* 报警和预警文本样式 */
+    #alarm-text, #warning-text, #device-warning-text {
+        display: inline-block; /* 设置为内联块元素，与图标水平排列 */
+        font-size: 18px; /* 文本大小为18px */
+        vertical-align: top; /* 文本与图标对齐 */
+
+    }
+
+    /* 表格的基本样式 */
+    table {
+        width: 100%; /* 表格宽度占满父容器 */
+        table-layout: fixed; /* 固定表格布局，单元格宽度由表格宽度均分 */
+        border-collapse: collapse; /* 合并表格边框，去掉单元格间的空隙 */
+        margin-top: 20px; /* 表格顶部留出20px的间距 */
+        background-color: rgba(211, 211, 211, 0.3); /* 设置半透明的浅灰色背景 */
+        border-radius: 10px; /* 设置表格外边框的圆角 */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* 可选：添加阴影效果，让容器看起来像是被“包裹”着 */
+    }
+
+    /* 表头和单元格样式 */
+    th, td {
+        text-align: center; /* 文本水平居中 */
+        padding: 8px; /* 单元格内边距为8px，增加可读性 */
+    }
+
+    /* 表头样式 */
+    th {
+        border: none; /* 表头没有边框 */
+        background-color: rgba(72,61,139,0.15); /* 设置表头背景色为浅灰色 */
+        font-weight: bold; /* 加粗表头字体 */
+    }
+
+    /* 表身单元格样式 */
+    td {
+        border: 2px solid white; /* 表身单元格有黑色边框 */
+        font-size: 16px; /* 设置单元格字体大小为16px */
+    }
+     /* 头部样式 */
+     .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: white;
+            color: black;
+            width: 100vw;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px; /* 增加20px的底部间距 */
+     }
+
+     .header-title {
+            font-size: 2em;
+            margin: 0;
+            flex-grow: 1; /* 使标题占据剩余空间 */
+            text-align: center; /* 居中对齐标题 */
+     }
+
+     .header-date {
+            font-size: 0.8em;
+            margin: 0;
+            position: relative;
+            left: -80px; /* 调整左侧偏移量 */
+     }
+
+
+
+    /* 按钮的基础样式 */
+        #toggle-exception-data-btn {
+            display: inline-block; /* 设置为内联块元素，方便对齐 */
+            font-size: 16px; /* 设置字体大小 */
+            font-weight: bold; /* 加粗字体 */
+            color: black; /* 按钮文字颜色 */
+            background-color: rgba(0,123,255,0.25); /* 按钮背景颜色，使用蓝色 */
+            border: solid #0099CC;  /* 保持蓝色边框 */
+            border-radius: 5px; /* 圆角样式 */
+            padding: 10px 20px; /* 增加内边距 */
+            cursor: pointer; /* 鼠标悬浮时显示手型 */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* 添加阴影效果 */
+            transition: background-color 0.3s ease, transform 0.2s ease; /* 添加过渡效果 */
+        }
+
+        /* 鼠标悬停时的样式 */
+        #toggle-exception-data-btn:hover {
+            color:white;
+            background-color: #0056b3; /* 悬停时加深背景颜色 */
+            transform: translateY(-2px); /* 悬停时向上微移 */
+        }
+
+        /* 按钮点击时的样式 */
+        #toggle-exception-data-btn:active {
+            background-color: #003d82; /* 点击时更深的背景颜色 */
+            transform: translateY(0); /* 还原微移效果 */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* 减弱阴影 */
+        }
+</style>
+</head>
+<body>
+    <!-- 添加占位元素用于插入导航栏 -->
+    <div id="nav-placeholder"></div>
+
+    <div class="header">
+        <h1 class="header-title">设备报警系统</h1>
+        <span class="header-date" id="current-date-time"></span>
+    </div>
+    <div class="container">
+        <div class="status-container">
+           <!-- 设备报警状态显示 -->
+            <div class="alarm-status">
+                <h3>设备报警状态</h3>
+                <div class="status-indicator" id="alarm-indicator"></div>
+                <p id="alarm-text">正在加载...</p>
+            </div>
+
+            <!-- 设备实时状态显示 -->
+            <div class="warning-status">
+                <h3>设备实时状态</h3>
+                <div class="status-indicator" id="warning-indicator"></div>
+                <p id="warning-text">正在加载...</p>
+            </div>
+
+        </div>
+
+
+        <!-- 历史气象数据表格 -->
+        <h3>传感器历史数据</h3>
+        <div>
+            <button id="toggle-exception-data-btn">查看近期异常数据</button>
+        </div>
+        <table id="history-weather-table">
+            <thead>
+                <tr>
+                    <th>温度 (°C)</th>
+                    <th>湿度 (%)</th>
+                    <th>风速 (km/h)</th>
+                    <th>PM2.5 (μg/m³)</th>
+                    <th>PM10 (μg/m³)</th>
+                    <th>时间戳</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="6">正在加载...</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+     <script>
+        // 从 Flask 模板引擎获取 username、identity 和 avatar_url
+        const username = "{{ username }}";
+        const identity = "{{ identity }}";
+        const avatarUrl = "{{ avatar_url }}"; // 头像 URL
+    </script>
+    <script src="/static/navbar.js"></script>
+    <script>
+
+        // 获取当前日期和时间并格式化
+        function updateDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekDay = weekDays[now.getDay()];
+            const formattedDate = `${year}-${month}-${day} ${weekDay} ${hours}:${minutes}:${seconds}`;
+            document.getElementById('current-date-time').textContent = formattedDate;
+        }
+
+        // 初始化时立即更新一次
+        updateDateTime();
+
+        // 每秒更新一次时间
+        setInterval(updateDateTime, 1000);
+
+        // 存储完整历史数据和异常数据
+        let completeHistoryData = [];
+        let exceptionData = [];
+
+        // 处理并渲染表格数据
+        function renderTableData(data) {
+            let rows = '';
+            data.forEach(function (weather) {
+                const timestamp = new Date(weather.timestamp * 1000).toLocaleString();
+                let TempColor = weather.temperature > 40 ? 'style="color: red;"' : weather.temperature <= 0 ? 'style="color: blue;"' : '';
+                let HumColor = weather.humidity > 60 ? 'style="color: red;"' : '';
+                let WindColor = weather.wind_speed > 6 ? 'style="color: red;"' : '';
+                let pm25Color = weather.pm25 > 80 ? 'style="color: red;"' : '';
+                let pm10Color = weather.pm10 > 120 ? 'style="color: red;"' : '';
+
+                rows += `
+                    <tr>
+                        <td ${TempColor}>${weather.temperature}</td>
+                        <td ${HumColor}>${weather.humidity}</td>
+                        <td ${WindColor}>${weather.wind_speed}</td>
+                        <td ${pm25Color}>${weather.pm25}</td>
+                        <td ${pm10Color}>${weather.pm10}</td>
+                        <td>${timestamp}</td>
+                    </tr>
+                `;
+            });
+            $('#history-weather-table tbody').html(rows);
+        }
+
+        // 更新气象数据
+        function updateWeatherData() {
+            $.get('/latest_weather', function (data) {
+                const historyData = data.history;
+
+                // 存储完整数据
+                completeHistoryData = historyData;
+
+                // 过滤异常数据
+                exceptionData = historyData.filter(function (weather) {
+                    return (
+                        weather.temperature > 40 || weather.temperature <= 0 ||
+                        weather.humidity > 60 ||
+                        weather.wind_speed > 6 ||
+                        weather.pm25 > 80 ||
+                        weather.pm10 > 120
+                    );
+            });
+
+                // 初次加载完整数据
+                renderTableData(completeHistoryData);
+
+                // 更新报警状态
+                updateAlarmStatus(data);
+            });
+        }
+
+        // 切换按钮事件
+        $(document).on('click', '#toggle-exception-data-btn', function () {
+            const isViewingExceptions = $(this).text() === '返回';
+            if (isViewingExceptions) {
+                // 切换回完整数据
+                renderTableData(completeHistoryData);
+                $(this).text('查看近期异常数据');
+            } else {
+                // 切换到异常数据
+                renderTableData(exceptionData);
+                $(this).text('返回');
+            }
+        });
+
+        // 更新报警状态
+        function updateAlarmStatus(data) {
+            const alarmStatus = data.alarmStatus;
+            $('#alarm-text').text(alarmStatus.text);
+             const alarmCard = $('.alarm-status'); // 获取报警卡片
+             const alarmIndicator = $('#alarm-indicator');
+            if (alarmStatus.status === 'normal') {
+                alarmIndicator.css('background-color', 'green');
+                alarmCard.css('background-color', 'rgba(0,128,0,0.2)'); // 绿色背景
+            } else if (alarmStatus.status === 'warning') {
+                alarmIndicator.css('background-color', 'yellow');
+                alarmCard.css('background-color', 'rgba(255,255,0,0.2)'); // 黄色背景
+            } else if (alarmStatus.status === 'critical') {
+                alarmIndicator.css('background-color', 'red');
+                alarmCard.css('background-color', 'rgba(255,0,0,0.2)'); // 红色背景
+            }
+        }
+
+        // 页面加载时获取一次气象数据
+        $(document).ready(function() {
+            updateWeatherData();
+            // 每2小时更新一次气象数据
+            setInterval(updateWeatherData, 7200000);
+        });
+
+        // (试验)每 10 秒刷新页面
+        setInterval(() => {
+        window.location.reload();
+        }, 10000);
+
+    </script>
+</body>
+</html>
